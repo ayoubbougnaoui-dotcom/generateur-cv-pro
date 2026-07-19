@@ -2,10 +2,14 @@ import streamlit as st
 import google.generativeai as genai
 
 # ==============================================================================
-# CONFIGURATION ET LIENS DE PAIEMENT (À MODIFIER SI BESOIN)
+# CONFIGURATION ET LIENS DE PAIEMENT
 # ==============================================================================
 PAYPAL_LINK = "https://paypal.me/Ayoub212500/4.99EUR"
 CODE_SECRET_PREMIUM = "PREMIUM2026"
+
+# Configuration de la clé API Gemini en dur
+GEMINI_API_KEY = "AQ.Ab8RN6KAJd0t8vxUaN9svqlHC5iYRZoaZt8sdtkcqC_U6kJDzg"
+genai.configure(api_key=GEMINI_API_KEY)
 
 # Configuration de la page
 st.set_page_config(
@@ -53,21 +57,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-# ==============================================================================
-# GESTION DES CLÉS API ET DE L'ÉTAT DE L'APPLICATION
-# ==============================================================================
-# Essayer de récupérer la clé API depuis les secrets de Streamlit
-api_key = st.secrets.get("AQ.Ab8RN6KAJd0t8vxUaN9svqlHC5iYRZoaZt8sdtkcqC_U6kJDzg", None)
-
-# Si pas de clé dans les secrets, on propose un champ caché dans la barre latérale
-if not api_key:
-    api_key = st.sidebar.text_input("🔑 Clé API Gemini (Optionnel si configuré en secret)", type="password")
-
-if api_key:
-    genai.configure(api_key=api_key)
-else:
-    st.sidebar.warning("⚠️ Attention : Aucune clé API Gemini détectée. Configurez-la dans les secrets Streamlit ou saisissez-la ci-dessus pour faire fonctionner l'IA.")
 
 # Initialisation des variables de session
 if "generations_count" not in st.session_state:
@@ -207,9 +196,7 @@ with tab1:
         st.info("💡 Plus vous donnez de détails sur vos forces, plus la lettre rédigée par l'IA sera personnalisée et convaincante !")
         
         if st.button("✨ Générer ma lettre de motivation", use_container_width=True, type="primary"):
-            if not api_key:
-                st.error("Veuillez d'abord configurer votre clé API Gemini.")
-            elif not nom_complet or not poste_vise or not entreprise_cible:
+            if not nom_complet or not poste_vise or not autocomplete_value:
                 st.warning("Veuillez remplir au moins votre nom, le poste visé et l'entreprise.")
             elif not peut_generer():
                 afficher_paywall()
@@ -251,7 +238,7 @@ with tab1:
                         model = genai.GenerativeModel("gemini-1.5-flash")
                         response = model.generate_content(prompt_lettre)
                         
-                        st.success("Réfactions terminée avec succès ! 🎉")
+                        st.success("Rédaction terminée avec succès ! 🎉")
                         st.text_area("Copiez votre lettre ci-dessous :", response.text, height=450)
                         
                         # Enregistrement de l'action
@@ -289,11 +276,8 @@ with tab2:
     with col_cv2:
         st.info("💡 L'IA va transformer vos notes brutes en un CV ultra-professionnel, réécrire vos missions de manière valorisante et structurer le tout proprement.")
         
-        # Bouton réservé aux premiums ou au premier essai
         if st.button("🛠️ Générer mon CV optimisé", use_container_width=True, type="primary"):
-            if not api_key:
-                st.error("Veuillez d'abord configurer votre clé API Gemini.")
-            elif not nom_cv or not metier_cv:
+            if not nom_cv or not metier_cv:
                 st.warning("Veuillez indiquer au moins votre nom et votre titre de métier.")
             elif not peut_generer():
                 afficher_paywall()
@@ -433,16 +417,3 @@ with tab3:
 
 # Pied de page discret
 st.markdown("<hr style='margin-top:50px;'><p style='text-align:center; color:#94A3B8; font-size:12px;'>Générateur Pro CV & Lettres de Motivation © 2026. Tous droits réservés.</p>", unsafe_allow_html=True)
-```eof
-
-### Qu'est-ce que j'ai changé et ajouté dans ce code ?
-
-1. **Unification des codes (CV + Lettre) :** Tu trouveras le créateur de CV complet dans l'onglet numéro 2, avec des formulaires spécifiques (expériences, formations, compétences).
-2. **La suite Premium complète :** L'onglet numéro 3 est maintenant un espace magique ! Si l'utilisateur n'est pas premium, il voit un aperçu alléchant avec un bouton PayPal. S'il valide ton code secret, il débloque :
-   * Le générateur d'e-mail de relance automatique (📞).
-   * L'outil de préparation aux questions d'entretien (👔).
-   * Le créateur de messages d'approche directe sur LinkedIn (💬).
-3. **Le système de verrouillage automatique :** Tout est protégé. Un utilisateur gratuit n'a le droit qu'à **un seul essai global** sur le site (que ce soit pour une lettre ou un CV). Dès que l'essai est consommé, un panneau d'alerte rouge s'affiche à la place des boutons pour l'inviter à acheter son pass sur ton PayPal.
-4. **Le code secret :** Le code est configuré à la ligne 10 de ton application (`PREMIUM2026`).
-
-Ton application est désormais une véritable agence de recrutement automatisée de haut niveau ! Copie ce code, remplace-le sur ton fichier GitHub et regarde la magie opérer. Dis-moi si tout est nickel pour toi !
