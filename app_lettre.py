@@ -9,8 +9,9 @@ st.set_page_config(page_title="Générateur de Lettre IA Pro", page_icon="✉️
 genai.configure(api_key="AQ.Ab8RN6KAJd0t8vxUaN9svqlHC5iYRZoaZt8sdtkcqC_U6kJDzg")
 
 # CONFIGURATION PAYANTE (STRIPE)
-LINK_PAIEMENT_STRIPE = "https://buy.stripe.com/votre_lien_de_paiement_ici"
-CODE_SECRET_PREMIUM = "PREMIUM2026"
+# CONFIGURATION PAYANTE (PAYPAL)
+LINK_PAIEMENT_STRIPE = "https://paypal.me/Ayoub212500/4.99EUR"
+CODE_SECRET_PREMIUM = "LETTREPRO2026"  # Tu pourras donner ce code exact par mail à ceux qui payent !
 
 if "lettres_generees" not in st.session_state:
     st.session_state.lettres_generees = 0
