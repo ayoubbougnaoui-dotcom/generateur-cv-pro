@@ -233,7 +233,7 @@ with tab1:
                         Rends le texte immédiatement exploitable et chaleureux.
                         """
                         
-                        model = genai.GenerativeModel("models/gemini-1.5-flash")
+                        model = genai.GenerativeModel("gemini-pro")
                         response = model.generate_content(prompt_lettre)
                         st.success("Rédaction terminée avec succès ! 🎉")
                         st.text_area("Copiez votre lettre ci-dessous :", response.text, height=450)
@@ -302,7 +302,7 @@ with tab2:
                         Fais en sorte que le résultat soit clair, percutant et prêt à être copié-collé dans un traitement de texte.
                         """
                         
-                        model = genai.GenerativeModel("models/gemini-1.5-flash")
+                        model = genai.GenerativeModel("gemini-pro")
                         response = model.generate_content(prompt_cv)
                         st.success("Votre CV est prêt ! Copiez le texte ci-dessous :")
                         st.text_area("Structure et textes optimisés du CV :", response.text, height=450)
@@ -359,7 +359,7 @@ with tab3:
                 if st.button("🚀 Créer l'e-mail de relance", use_container_width=True, type="primary"):
                     with st.spinner("Génération de la relance..."):
                         prompt_rel = f"Rédige un e-mail de relance court, extrêmement courtois et professionnel pour une candidature au poste de {rel_poste} chez {rel_ent} envoyée il y a {rel_temps}. Le style doit être {rel_ton}. Rappelle subtilement la motivation à rejoindre l'équipe sans paraître impatient."
-                        model = genai.GenerativeModel("models/gemini-1.5-flash")
+                        model = genai.GenerativeModel("gemini-pro")
                         response = model.generate_content(prompt_rel)
                         st.success("Votre relance est prête !")
                         st.text_area("Message de relance :", response.text, height=250)
@@ -376,7 +376,7 @@ with tab3:
                 if st.button("🎯 Préparer mon entretien", use_container_width=True, type="primary"):
                     with st.spinner("Analyse du poste et simulation..."):
                         prompt_prep = f"Tu es un recruteur professionnel pour l'entreprise {prep_ent}. Le candidat passe un entretien pour le poste de {prep_poste}. Compétences clés : {prep_desc}. Sors les 3 questions les plus piégeuses et pertinentes que tu lui poserais spécifiquement pour ce poste, et pour CHAQUE question, donne l'explication de ce que le recruteur cherche à comprendre ainsi que la meilleure réponse type à formuler."
-                        model = genai.GenerativeModel("models/gemini-1.5-flash")
+                        model = genai.GenerativeModel("gemini-pro")
                         response = model.generate_content(prompt_prep)
                         st.success("Fiches de révision d'entretien prêtes !")
                         st.write(response.text)
@@ -395,7 +395,7 @@ with tab3:
                     with st.spinner("Synthèse du message direct..."):
                         nom_rec_text = link_recruteur if link_recruteur else "le recruteur"
                         prompt_link = f"Rédige un message de prise de contact direct ultra-court pour LinkedIn (maximum 300 à 400 caractères, idéal pour un message privé d'invitation) destiné à {nom_rec_text} pour exprimer de l'intérêt pour le poste de {link_poste} chez {link_entreprise}. Inclus l'atout suivant : {link_accroche}. Le ton doit être professionnel, percutant et inciter à une brève réponse."
-                        model = genai.GenerativeModel("models/gemini-1.5-flash")
+                        model = genai.GenerativeModel("gemini-pro")
                         response = model.generate_content(prompt_link)
                         st.success("Message LinkedIn rédigé !")
                         st.text_area("Votre message d'approche :", response.text, height=200)
