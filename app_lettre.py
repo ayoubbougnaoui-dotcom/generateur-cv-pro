@@ -62,8 +62,15 @@ st.markdown("""
 if "generations_count" not in st.session_state:
     st.session_state.generations_count = 0
 
-if "is_premium" not in st.session_state:
-    st.session_state.is_premium = False
+# ------------------------------------------------------------------------------
+# DÉTECTION AUTOMATIQUE DU CODE DANS L'URL (Pour garder le premium permanent)
+# ------------------------------------------------------------------------------
+params = st.query_params
+code_dans_url = params.get("code", "")
+
+is_premium = False
+if code_dans_url.strip() == CODE_SECRET_PREMIUM:
+    is_premium = True
 
 # ==============================================================================
 # BARRE LATÉRALE - ESPACE PREMIUM & PAIEMENT
@@ -71,42 +78,39 @@ if "is_premium" not in st.session_state:
 st.sidebar.image("https://img.icons8.com/fluent/96/000000/crown.png", width=60)
 st.sidebar.title("Espace Premium 👑")
 
-# Entrée du code d'accès
-code_saisi = st.sidebar.text_input("Tu as payé ? Entre ton code d'accès :", type="password")
-
-if code_saisi:
-    if code_saisi.strip() == CODE_SECRET_PREMIUM:
-        st.session_state.is_premium = True
-        st.sidebar.success("👑 ACCÈS PREMIUM ILLIMITÉ ACTIF")
-    else:
-        st.sidebar.error("❌ Code incorrect")
-        st.session_state.is_premium = False
-else:
-    if not st.session_state.is_premium:
-        st.sidebar.info("💡 Mode gratuit actif (Limité à 1 essai global)")
-
-# Compteur d'essais pour l'utilisateur
-if not st.session_state.is_premium:
-    st.sidebar.write(f"📊 Essai gratuit utilisé : **{st.session_state.generations_count} / 1**")
-else:
+if is_premium:
+    st.sidebar.success("👑 ACCÈS PREMIUM ILLIMITÉ ACTIF")
     st.sidebar.write("📊 Utilisation : **Illimitée ♾️**")
+    st.sidebar.info("🔗 Ce lien est ton accès permanent. Garde-le bien en favori !")
+else:
+    code_saisi = st.sidebar.text_input("Tu as payé ? Entre ton code d'accès :", type="password")
+    if code_saisi:
+        if code_saisi.strip() == CODE_SECRET_PREMIUM:
+            is_premium = True
+            st.sidebar.success("👑 ACCÈS PREMIUM ILLIMITÉ ACTIF")
+            st.query_params["code"] = CODE_SECRET_PREMIUM
+            st.rerun()
+        else:
+            st.sidebar.error("❌ Code incorrect")
 
-# Bouton de paiement visible si non premium
-if not st.session_state.is_premium:
-    st.sidebar.markdown(f"""
-    <hr style="margin: 20px 0;">
-    <div style="background-color:#FFFBEB; padding:15px; border-radius:10px; border:1px solid #FEF3C7; text-align:center;">
-        <span style="font-size:16px; font-weight:bold; color:#B45309;">👑 Devenez Premium</span>
-        <p style="font-size:13px; color:#4B5563; margin: 8px 0;">
-            Débloquez le créateur de CV, le message LinkedIn, la relance automatique, le choix des tons et les questions d'entretien d'embauche en illimité !
-        </p>
-        <a href="{PAYPAL_LINK}" target="_blank" style="text-decoration:none;">
-            <button style="background-color:#EF4444; color:white; border:none; padding:10px 15px; font-size:14px; font-weight:bold; border-radius:5px; cursor:pointer; width:100%; transition: 0.3s;">
-                Débloquer l'accès (4,99 €)
-            </button>
-        </a>
-    </div>
-    """, unsafe_allow_html=True)
+    if not is_premium:
+        st.sidebar.info("💡 Mode gratuit actif (Limité à 1 essai global)")
+        st.sidebar.write(f"📊 Essai gratuit utilisé : **{st.session_state.generations_count} / 1**")
+        
+        st.sidebar.markdown(f"""
+        <hr style="margin: 20px 0;">
+        <div style="background-color:#FFFBEB; padding:15px; border-radius:10px; border:1px solid #FEF3C7; text-align:center;">
+            <span style="font-size:16px; font-weight:bold; color:#B45309;">👑 Devenez Premium</span>
+            <p style="font-size:13px; color:#4B5563; margin: 8px 0;">
+                Débloquez le créateur de CV, le message LinkedIn, la relance automatique, le choix des tons et les questions d'entretien d'embauche en illimité !
+            </p>
+            <a href="{PAYPAL_LINK}" target="_blank" style="text-decoration:none;">
+                <button style="background-color:#EF4444; color:white; border:none; padding:10px 15px; font-size:14px; font-weight:bold; border-radius:5px; cursor:pointer; width:100%; transition: 0.3s;">
+                    Débloquer l'accès (4,99 €)
+                </button>
+            </a>
+        </div>
+        """, unsafe_allow_html=True)
 
 # ==============================================================================
 # COMPOSANT PAYWALL
@@ -126,22 +130,20 @@ def afficher_paywall():
             </a>
         </div>
         <p style="font-size:14px; color:#6B7280;">
-            🔒 Paiement sécurisé via PayPal. Une fois le paiement effectué, vous recevrez instantanément votre code secret à saisir dans la barre latérale de gauche.
+            🔒 Paiement sécurisé via PayPal. Une fois le paiement effectué, vous recevrez instantanément votre lien d'accès Premium par e-mail.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-# Vérification d'autorisation de générer
 def peut_generer():
-    if st.session_state.is_premium:
+    if is_premium:
         return True
     if st.session_state.generations_count < 1:
         return True
     return False
 
-# Incremente après chaque génération réussie
 def enregistrer_generation():
-    if not st.session_state.is_premium:
+    if not is_premium:
         st.session_state.generations_count += 1
 
 # ==============================================================================
@@ -150,7 +152,6 @@ def enregistrer_generation():
 st.markdown("<div class='main-title'>Générateur de Candidature Intelligent 🚀</div>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>L'intelligence artificielle au service de votre réussite professionnelle</div>", unsafe_allow_html=True)
 
-# Création des onglets de navigation
 tab1, tab2, tab3 = st.tabs([
     "📝 Lettre de Motivation", 
     "📄 Créateur de CV Pro", 
@@ -162,7 +163,6 @@ tab1, tab2, tab3 = st.tabs([
 # ------------------------------------------------------------------------------
 with tab1:
     st.subheader("Créez une lettre de motivation percutante")
-    
     col1, col2 = st.columns([1, 1])
     
     with col1:
@@ -174,8 +174,7 @@ with tab1:
             placeholder="Ex: Sens du service client, dynamisme, esprit d'équipe, 2 ans d'expérience dans le prêt-à-porter..."
         )
         
-        # Option Premium : Choix du ton
-        if st.session_state.is_premium:
+        if is_premium:
             st.markdown("<span class='premium-badge'>👑 OPTION PREMIUM ACTIVE</span>", unsafe_allow_html=True)
             ton_lettre = st.selectbox(
                 "Style et ton de la lettre",
@@ -196,7 +195,7 @@ with tab1:
         st.info("💡 Plus vous donnez de détails sur vos forces, plus la lettre rédigée par l'IA sera personnalisée et convaincante !")
         
         if st.button("✨ Générer ma lettre de motivation", use_container_width=True, type="primary"):
-            if not nom_complet or not poste_vise or not entreprise_cible:
+            if not nom_complet or not poste_vise or not mindset := entreprise_cible:
                 st.warning("Veuillez remplir au moins votre nom, le poste visé et l'entreprise.")
             elif not peut_generer():
                 afficher_paywall()
@@ -234,12 +233,10 @@ with tab1:
                         Rends le texte immédiatement exploitable et chaleureux.
                         """
                         
-                        model = genai.GenerativeModel("gemini-1.5-flash")
+                        model = genai.GenerativeModel("models/gemini-1.5-flash")
                         response = model.generate_content(prompt_lettre)
-                        
                         st.success("Rédaction terminée avec succès ! 🎉")
                         st.text_area("Copiez votre lettre ci-dessous :", response.text, height=450)
-                        
                         enregistrer_generation()
                     except Exception as e:
                         st.error(f"Une erreur est survenue : {e}")
@@ -249,7 +246,6 @@ with tab1:
 # ------------------------------------------------------------------------------
 with tab2:
     st.subheader("Générateur de structure de CV Professionnel")
-    
     col_cv1, col_cv2 = st.columns([1, 1])
     
     with col_cv1:
@@ -306,12 +302,10 @@ with tab2:
                         Fais en sorte que le résultat soit clair, percutant et prêt à être copié-collé dans un traitement de texte.
                         """
                         
-                        model = genai.GenerativeModel("gemini-1.5-flash")
+                        model = genai.GenerativeModel("models/gemini-1.5-flash")
                         response = model.generate_content(prompt_cv)
-                        
                         st.success("Votre CV est prêt ! Copiez le texte ci-dessous :")
                         st.text_area("Structure et textes optimisés du CV :", response.text, height=450)
-                        
                         enregistrer_generation()
                     except Exception as e:
                         st.error(f"Une erreur est survenue lors de la création du CV : {e}")
@@ -322,14 +316,14 @@ with tab2:
 with tab3:
     st.subheader("Boîte à outils Premium 👑")
     
-    if not st.session_state.is_premium:
+    if not is_premium:
         st.warning("🔒 Cet espace est réservé aux membres Premium. Payez une seule fois pour débloquer toutes ces fonctionnalités d'accélération de carrière.")
         
         st.markdown("""
         ### Découvrez ce qui vous attend dans l'espace Premium :
-        - 📞 **Le Relanceur Automatique :** Générez des e-mails de relance professionnels de candidatures pour relancer les recruteurs au bon moment sans paraître insistant.
-        - 👔 **Simulateur d'Entretien :** Obtenez les 3 questions les plus piégeuses basées sur le poste choisi et apprenez à y répondre parfaitement.
-        - 💬 **L'Approche Directe LinkedIn :** Convertissez votre profil en un message de prise de contact ultra-court de 4 à 5 lignes pour contacter les recruteurs en direct.
+        - 📞 **Le Relanceur Automatique :** Générez des e-mails de relance professionnels pour suivre vos candidatures.
+        - 👔 **Simulateur d'Entretien :** Obtenez les 3 questions les plus piégeuses basées sur le poste choisi et leurs réponses types.
+        - 💬 **L'Approche Directe LinkedIn :** Convertissez votre profil en un message d'approche privé de 4 à 5 lignes percutant.
         """)
         
         st.markdown(f"""
@@ -365,7 +359,7 @@ with tab3:
                 if st.button("🚀 Créer l'e-mail de relance", use_container_width=True, type="primary"):
                     with st.spinner("Génération de la relance..."):
                         prompt_rel = f"Rédige un e-mail de relance court, extrêmement courtois et professionnel pour une candidature au poste de {rel_poste} chez {rel_ent} envoyée il y a {rel_temps}. Le style doit être {rel_ton}. Rappelle subtilement la motivation à rejoindre l'équipe sans paraître impatient."
-                        model = genai.GenerativeModel("gemini-1.5-flash")
+                        model = genai.GenerativeModel("models/gemini-1.5-flash")
                         response = model.generate_content(prompt_rel)
                         st.success("Votre relance est prête !")
                         st.text_area("Message de relance :", response.text, height=250)
@@ -382,7 +376,7 @@ with tab3:
                 if st.button("🎯 Préparer mon entretien", use_container_width=True, type="primary"):
                     with st.spinner("Analyse du poste et simulation..."):
                         prompt_prep = f"Tu es un recruteur professionnel pour l'entreprise {prep_ent}. Le candidat passe un entretien pour le poste de {prep_poste}. Compétences clés : {prep_desc}. Sors les 3 questions les plus piégeuses et pertinentes que tu lui poserais spécifiquement pour ce poste, et pour CHAQUE question, donne l'explication de ce que le recruteur cherche à comprendre ainsi que la meilleure réponse type à formuler."
-                        model = genai.GenerativeModel("gemini-1.5-flash")
+                        model = genai.GenerativeModel("models/gemini-1.5-flash")
                         response = model.generate_content(prompt_prep)
                         st.success("Fiches de révision d'entretien prêtes !")
                         st.write(response.text)
@@ -401,7 +395,7 @@ with tab3:
                     with st.spinner("Synthèse du message direct..."):
                         nom_rec_text = link_recruteur if link_recruteur else "le recruteur"
                         prompt_link = f"Rédige un message de prise de contact direct ultra-court pour LinkedIn (maximum 300 à 400 caractères, idéal pour un message privé d'invitation) destiné à {nom_rec_text} pour exprimer de l'intérêt pour le poste de {link_poste} chez {link_entreprise}. Inclus l'atout suivant : {link_accroche}. Le ton doit être professionnel, percutant et inciter à une brève réponse."
-                        model = genai.GenerativeModel("gemini-1.5-flash")
+                        model = genai.GenerativeModel("models/gemini-1.5-flash")
                         response = model.generate_content(prompt_link)
                         st.success("Message LinkedIn rédigé !")
                         st.text_area("Votre message d'approche :", response.text, height=200)
