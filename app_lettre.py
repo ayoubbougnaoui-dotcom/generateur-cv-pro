@@ -6,7 +6,7 @@ from openai import OpenAI
 st.set_page_config(page_title="Générateur de Lettre IA Pro", page_icon="✉️", layout="centered")
 
 # CLÉ API OPENAI CONFIGURÉE
-client = OpenAI(api_key="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")
+client = OpenAI(api_key="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")
 
 # CONFIGURATION PAYANTE (STRIPE)
 LINK_PAIEMENT_STRIPE = "https://buy.stripe.com/votre_lien_de_paiement_ici"
