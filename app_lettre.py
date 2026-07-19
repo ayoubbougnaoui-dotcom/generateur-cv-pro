@@ -9,7 +9,7 @@ CODE_SECRET_PREMIUM = "PREMIUM2026"
 
 # Clé API Gemini et URL d'appel direct (v1 stable)
 GEMINI_API_KEY = "AQ.Ab8RN6KAJd0t8vxUaN9svqlHC5iYRZoaZt8sdtkcqC_U6kJDzg"
-API_URL = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
 # Fonction d'appel direct à l'API via requêtes HTTP
 def generer_texte_gemini(prompt_texte):
