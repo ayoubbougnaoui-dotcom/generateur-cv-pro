@@ -135,7 +135,7 @@ with tab1:
 
     with col2:
         if st.button("✨ Générer ma lettre de motivation", use_container_width=True, type="primary"):
-            if not nom_complet or not poste_vise or not_entreprise_cible:
+            if not nom_complet or not poste_vise or not entreprise_cible:
                 st.warning("Veuillez remplir les champs obligatoires.")
             elif not peut_generer():
                 afficher_paywall()
