@@ -1,19 +1,13 @@
 import streamlit as st
 import streamlit.components.v1 as components
-import openai
+from openai import OpenAI
 
 # 1. CONFIGURATION DE LA PAGE
 st.set_page_config(page_title="Générateur de Lettre IA Pro", page_icon="✉️", layout="centered")
 
-# Configuration de la clé API OpenAI (à remplacer par la tienne ou à mettre dans les Secrets Streamlit)
-# Idéalement, utilise st.secrets["OPENAI_API_KEY"] sur Streamlit Cloud
-OPENAI_API_KEY = "VOTRE_CLE_API_OPENAI_ICI" 
-openai.api_key = OPENAI_API_KEY
-
-# CONFIGURATION PAYANTE (STRIPE)
-LINK_PAIEMENT_STRIPE = "https://buy.stripe.com/votre_lien_de_paiement_ici"
-CODE_SECRET_PREMIUM = "PREMIUM2026"  # Le code secret fourni à tes clients après achat
-
+# TA CLÉ API DIRECTEMENT INJECTÉE ICI
+# On force l'activation de la clé sans passer par les Secrets
+client = OpenAI(api_key="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")
 # Initialisation du compteur de lettres gratuites dans la session
 if "lettres_generees" not in st.session_state:
     st.session_state.lettres_generees = 0
