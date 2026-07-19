@@ -9,8 +9,8 @@ CODE_SECRET_PREMIUM = "PREMIUM2026"
 GEMINI_API_KEY = "AQ.Ab8RN6LNBwuyb9WeUt56M8bKOmfq0caxHQfbioCTgfzrmitD4A"
 
 # Utilisation du modèle 1.5-flash avec la nouvelle clé API
-API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
-
+# Utilisation du modèle gemini-2.0-flash qui est le standard stable actuel
+API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={AQ.Ab8RN6LNBwuyb9WeUt56M8bKOmfq0caxHQfbioCTgfzrmitD4A}"
 def generer_texte_gemini(prompt_texte):
     payload = {"contents": [{"parts": [{"text": prompt_texte}]}]}
     headers = {"Content-Type": "application/json"}
