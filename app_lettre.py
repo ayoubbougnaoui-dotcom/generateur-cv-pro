@@ -75,8 +75,8 @@ else:
                 try:
                     prompt_IA = f"Rédige une lettre de motivation professionnelle et bien structurée pour le poste de {poste_vise}. Candidat: {nom}, habitant à {ville}. Mes compétences à intégrer : {competences_cles}. Analyse cette offre d'emploi pour adapter le texte : {offre_emploi}. Adopte le ton suivant : {ton}."
                     
-                    # Utilisation du modèle gratuit Gemini
-                    model = genai.GenerativeModel("gemini-1.5-flash")
+                    # Version mise à jour pour le modèle gratuit Gemini
+                    model = genai.GenerativeModel("gemini-2.5-flash")
                     response = model.generate_content(prompt_IA)
                     
                     lettre_redigee = response.text
