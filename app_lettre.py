@@ -21,16 +21,7 @@ def generer_texte_gemini(prompt_texte):
     except Exception as e:
         return f"Erreur : {str(e)}"
 
-# Configuration page
 st.set_page_config(page_title="Générateur Pro CV & Lettres", page_icon="👑", layout="wide")
-
-# CSS complet
-st.markdown("""
-<style>
-    .main-title { font-size: 42px; font-weight: 800; color: #1E293B; text-align: center; margin-bottom: 5px; }
-    .subtitle { font-size: 18px; color: #64748B; text-align: center; margin-bottom: 30px; }
-</style>
-""", unsafe_allow_html=True)
 
 # Session et Premium
 if "generations_count" not in st.session_state: st.session_state.generations_count = 0
@@ -52,21 +43,19 @@ def afficher_paywall():
     <a href="{PAYPAL_LINK}" target="_blank">Débloquer en illimité (4,99 €)</a></div>""", unsafe_allow_html=True)
 
 # Interface
-st.markdown("<div class='main-title'>Générateur de Candidature Intelligent 🚀</div>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle'>L'intelligence artificielle au service de votre réussite professionnelle</div>", unsafe_allow_html=True)
-
+st.markdown("<div style='font-size: 42px; font-weight: 800; color: #1E293B; text-align: center;'>Générateur de Candidature Intelligent 🚀</div>", unsafe_allow_html=True)
 tab1, tab2, tab3 = st.tabs(["📝 Lettre de Motivation", "📄 Créateur de CV Pro", "👑 Boite à Outils Premium"])
 
 with tab1:
     col1, col2 = st.columns(2)
     with col1:
-        nom = st.text_input("Nom & Prénom")
-        poste = st.text_input("Poste visé")
-        entreprise = st.text_input("Entreprise")
-        competences = st.text_area("Vos compétences clés")
-        ton = st.selectbox("Style", ["Classique / Formel", "Dynamique / Start-up", "Créatif"]) if is_premium else "Classique / Formel"
+        nom = st.text_input("Nom & Prénom", key="nom_lettre")
+        poste = st.text_input("Poste visé", key="poste_lettre")
+        entreprise = st.text_input("Entreprise", key="ent_lettre")
+        competences = st.text_area("Vos compétences clés", key="comp_lettre")
+        ton = st.selectbox("Style", ["Classique / Formel", "Dynamique / Start-up", "Créatif"], key="ton_lettre")
     with col2:
-        if st.button("✨ Générer ma lettre"):
+        if st.button("✨ Générer ma lettre", key="btn_lettre"):
             if not is_premium and st.session_state.generations_count >= 1: afficher_paywall()
             else:
                 res = generer_texte_gemini(f"Rédige une lettre pour {nom}, {poste} chez {entreprise}. Compétences: {competences}. Style: {ton}")
@@ -76,34 +65,32 @@ with tab1:
 with tab2:
     col1, col2 = st.columns(2)
     with col1:
-        nom_cv = st.text_input("Nom (CV)")
-        email_cv = st.text_input("Email")
-        tel_cv = st.text_input("Téléphone")
-        metier_cv = st.text_input("Titre du CV")
-        exp_cv = st.text_area("Expériences")
-        etudes_cv = st.text_area("Formations")
-        skills_cv = st.text_input("Skills")
+        nom_cv = st.text_input("Nom (CV)", key="nom_cv")
+        email_cv = st.text_input("Email", key="email_cv")
+        tel_cv = st.text_input("Téléphone", key="tel_cv")
+        metier_cv = st.text_input("Titre du CV", key="metier_cv")
+        exp_cv = st.text_area("Expériences", key="exp_cv")
     with col2:
-        if st.button("🛠️ Générer mon CV"):
+        if st.button("🛠️ Générer mon CV", key="btn_cv"):
             if not is_premium and st.session_state.generations_count >= 1: afficher_paywall()
             else:
-                res = generer_texte_gemini(f"CV markdown pour {nom_cv}, {metier_cv}. Exp: {exp_cv}, Etudes: {etudes_cv}, Skills: {skills_cv}")
+                res = generer_texte_gemini(f"CV markdown pour {nom_cv}, {metier_cv}. Exp: {exp_cv}")
                 st.text_area("Structure CV :", res, height=400)
                 if not is_premium: st.session_state.generations_count += 1
 
 with tab3:
     if not is_premium: st.warning("🔒 Espace réservé aux membres Premium.")
     else:
-        outil = st.radio("Choisissez un outil :", ["📞 Relance", "👔 Entretien", "💬 LinkedIn"])
+        outil = st.radio("Choisissez un outil :", ["📞 Relance", "👔 Entretien", "💬 LinkedIn"], key="outil_radio")
         if outil == "📞 Relance":
-            e = st.text_input("Entreprise")
-            p = st.text_input("Poste")
-            if st.button("🚀 Créer le mail"): st.text_area("Message :", generer_texte_gemini(f"Mail de relance pour {p} chez {e}"))
+            e_r = st.text_input("Entreprise", key="ent_rel")
+            p_r = st.text_input("Poste", key="post_rel")
+            if st.button("🚀 Créer le mail", key="btn_rel"): st.text_area("Message :", generer_texte_gemini(f"Mail de relance pour {p_r} chez {e_r}"))
         elif outil == "👔 Entretien":
-            p = st.text_input("Poste")
-            e = st.text_input("Entreprise")
-            if st.button("🎯 Préparer l'entretien"): st.write(generer_texte_gemini(f"Questions pièges pour entretien {p} chez {e}"))
+            p_e = st.text_input("Poste", key="post_ent")
+            e_e = st.text_input("Entreprise", key="ent_ent")
+            if st.button("🎯 Préparer l'entretien", key="btn_ent"): st.write(generer_texte_gemini(f"Questions pièges pour entretien {p_e} chez {e_e}"))
         elif outil == "💬 LinkedIn":
-            p = st.text_input("Poste")
-            e = st.text_input("Entreprise")
-            if st.button("📲 Rédiger le message"): st.text_area("Message :", generer_texte_gemini(f"Message LinkedIn pour {p} chez {e}"))
+            p_l = st.text_input("Poste", key="post_link")
+            e_l = st.text_input("Entreprise", key="ent_link")
+            if st.button("📲 Rédiger le message", key="btn_link"): st.text_area("Message :", generer_texte_gemini(f"Message LinkedIn pour {p_l} chez {e_l}"))
