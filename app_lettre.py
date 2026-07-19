@@ -195,7 +195,7 @@ with tab1:
         st.info("💡 Plus vous donnez de détails sur vos forces, plus la lettre rédigée par l'IA sera personnalisée et convaincante !")
         
         if st.button("✨ Générer ma lettre de motivation", use_container_width=True, type="primary"):
-            if not nom_complet or not poste_vise or not mindset := entreprise_cible:
+            if not nom_complet or not poste_vise or not entreprise_cible:
                 st.warning("Veuillez remplir au moins votre nom, le poste visé et l'entreprise.")
             elif not peut_generer():
                 afficher_paywall()
