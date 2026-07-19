@@ -7,7 +7,7 @@ import requests
 PAYPAL_LINK = "https://paypal.me/Ayoub212500/4.99EUR"
 CODE_SECRET_PREMIUM = "PREMIUM2026"
 
-# Clé API Gemini et URL d'appel direct (v1 stable)
+# Clé API Gemini et URL d'appel direct (v1beta requise pour gemini-1.5-flash)
 GEMINI_API_KEY = "AQ.Ab8RN6KAJd0t8vxUaN9svqlHC5iYRZoaZt8sdtkcqC_U6kJDzg"
 API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
