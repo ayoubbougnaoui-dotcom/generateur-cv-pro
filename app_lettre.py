@@ -1,12 +1,12 @@
 import streamlit as st
-import streamlit.components.v1 as components
-from openai import OpenAI
+import google.generativeai as genai
 
 # 1. CONFIGURATION DE LA PAGE
 st.set_page_config(page_title="Générateur de Lettre IA Pro", page_icon="✉️", layout="centered")
 
-# CLÉ API OPENAI CONFIGURÉE
-client = OpenAI(api_key="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")
+# CONFIGURATION DE LA CLÉ GEMINI GRATUITE
+# Remplace METS_TA_CLE_GEMINI_ICI par ta clé qui commence par Aq...
+genai.configure(api_key="AQ.Ab8RN6KAJd0t8vxUaN9svqlHC5iYRZoaZt8sdtkcqC_U6kJDzg")
 
 # CONFIGURATION PAYANTE (STRIPE)
 LINK_PAIEMENT_STRIPE = "https://buy.stripe.com/votre_lien_de_paiement_ici"
@@ -68,31 +68,24 @@ if bloque_par_paywall:
     """, unsafe_allow_html=True)
 else:
     if st.button("🚀 Générer ma Lettre de Motivation Personnalisée"):
-        if not client:
-            st.error("❌ La clé API OpenAI n'est pas configurée.")
-        elif not poste_vise or not competences_cles or not offre_emploi:
+        if not poste_vise or not competences_cles or not offre_emploi:
             st.error("❌ Veuillez remplir tous les champs.")
         else:
             with st.spinner("🤖 Rédaction en cours par l'IA..."):
                 try:
-                    prompt_IA = f"Rédige une lettre de motivation pour le poste de {poste_vise}. Candidat: {nom}, {ville}. Compétences: {competences_cles}. Offre: {offre_emploi}. Ton: {ton}."
+                    prompt_IA = f"Rédige une lettre de motivation professionnelle et bien structurée pour le poste de {poste_vise}. Candidat: {nom}, habitant à {ville}. Mes compétences à intégrer : {competences_cles}. Analyse cette offre d'emploi pour adapter le texte : {offre_emploi}. Adopte le ton suivant : {ton}."
                     
-                    response = client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=[
-                            {"role": "system", "content": "Tu es un expert en recrutement."},
-                            {"role": "user", "content": prompt_IA}
-                        ],
-                        temperature=0.7
-                    )
+                    # Utilisation du modèle gratuit Gemini
+                    model = genai.GenerativeModel("gemini-1.5-flash")
+                    response = model.generate_content(prompt_IA)
                     
-                    lettre_redigee = response.choices[0].message.content
+                    lettre_redigee = response.text
                     
                     if not est_premium:
                         st.session_state.lettres_generees += 1
                     
-                    st.success("🎉 Lettre rédigée !")
+                    st.success("🎉 Lettre rédigée par Gemini !")
                     st.text_area("📋 Copie ta lettre ici :", value=lettre_redigee, height=400)
                     
                 except Exception as e:
-                    st.error(f"⚠️ Erreur avec l'IA : {e}")
+                    st.error(f"⚠️ Erreur avec l'IA Gemini : {e}")
