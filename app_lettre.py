@@ -196,14 +196,13 @@ with tab1:
         st.info("💡 Plus vous donnez de détails sur vos forces, plus la lettre rédigée par l'IA sera personnalisée et convaincante !")
         
         if st.button("✨ Générer ma lettre de motivation", use_container_width=True, type="primary"):
-            if not nom_complet or not poste_vise or not autocomplete_value:
+            if not nom_complet or not poste_vise or not entreprise_cible:
                 st.warning("Veuillez remplir au moins votre nom, le poste visé et l'entreprise.")
             elif not peut_generer():
                 afficher_paywall()
             else:
                 with st.spinner("Rédaction de votre lettre personnalisée en cours..."):
                     try:
-                        # Construction du prompt selon le ton sélectionné
                         style_instruction = ""
                         if "Dynamique" in ton_lettre:
                             style_instruction = "Utilise un style direct, moderne, énergique et très enthousiaste, tout en restant professionnel. Évite les formules de politesse trop lourdes du XIXe siècle."
@@ -241,7 +240,6 @@ with tab1:
                         st.success("Rédaction terminée avec succès ! 🎉")
                         st.text_area("Copiez votre lettre ci-dessous :", response.text, height=450)
                         
-                        # Enregistrement de l'action
                         enregistrer_generation()
                     except Exception as e:
                         st.error(f"Une erreur est survenue : {e}")
@@ -314,7 +312,6 @@ with tab2:
                         st.success("Votre CV est prêt ! Copiez le texte ci-dessous :")
                         st.text_area("Structure et textes optimisés du CV :", response.text, height=450)
                         
-                        # Enregistrement de l'action
                         enregistrer_generation()
                     except Exception as e:
                         st.error(f"Une erreur est survenue lors de la création du CV : {e}")
@@ -325,11 +322,9 @@ with tab2:
 with tab3:
     st.subheader("Boîte à outils Premium 👑")
     
-    # Vérification d'accès à l'onglet Premium
     if not st.session_state.is_premium:
         st.warning("🔒 Cet espace est réservé aux membres Premium. Payez une seule fois pour débloquer toutes ces fonctionnalités d'accélération de carrière.")
         
-        # Aperçu visuel des outils pour donner envie
         st.markdown("""
         ### Découvrez ce qui vous attend dans l'espace Premium :
         - 📞 **Le Relanceur Automatique :** Générez des e-mails de relance professionnels de candidatures pour relancer les recruteurs au bon moment sans paraître insistant.
@@ -337,7 +332,6 @@ with tab3:
         - 💬 **L'Approche Directe LinkedIn :** Convertissez votre profil en un message de prise de contact ultra-court de 4 à 5 lignes pour contacter les recruteurs en direct.
         """)
         
-        # Rappel du bouton de paiement
         st.markdown(f"""
         <div style="text-align: center; margin-top:20px;">
             <a href="{PAYPAL_LINK}" target="_blank">
@@ -358,7 +352,6 @@ with tab3:
         
         st.markdown("<hr>", unsafe_allow_html=True)
         
-        # ----------------- OUTIL 1 : RELANCE AUTOMATIQUE -----------------
         if choix_outil == "📞 Relance de candidature (Suivi)":
             st.markdown("#### Générateur d'e-mail de relance professionnel")
             col_r1, col_r2 = st.columns(2)
@@ -377,7 +370,6 @@ with tab3:
                         st.success("Votre relance est prête !")
                         st.text_area("Message de relance :", response.text, height=250)
 
-        # ----------------- OUTIL 2 : PRÉPARATION ENTRETIEN -----------------
         elif choix_outil == "👔 Préparation à l'entretien":
             st.markdown("#### Anticipateur de questions d'entretien IA")
             col_p1, col_p2 = st.columns(2)
@@ -395,7 +387,6 @@ with tab3:
                         st.success("Fiches de révision d'entretien prêtes !")
                         st.write(response.text)
 
-        # ----------------- OUTIL 3 : MESSAGE LINKEDIN -----------------
         elif choix_outil == "💬 Message LinkedIn d'approche directe":
             st.markdown("#### Générateur de message court pour LinkedIn")
             col_l1, col_l2 = st.columns(2)
