@@ -2,15 +2,14 @@ import streamlit as st
 import requests
 
 # ==============================================================================
-# CONFIGURATION ET CLÉ API
+# CONFIGURATION - MODÈLE MIS À JOUR POUR GEMINI 3
 # ==============================================================================
 PAYPAL_LINK = "https://paypal.me/Ayoub212500/4.99EUR"
 CODE_SECRET_PREMIUM = "PREMIUM2026"
 GEMINI_API_KEY = "AQ.Ab8RN6LNBwuyb9WeUt56M8bKOmfq0caxHQfbioCTgfzrmitD4A"
 
-# Utilisation du modèle 'gemini-1.5-flash' car c'est le standard de compatibilité 2026
-# Si vous avez une erreur 404, vérifiez dans AI Studio si vous avez accès à un autre nom.
-API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + GEMINI_API_KEY
+# URL mise à jour avec le nom du modèle identifié dans votre interface (gemini-3-flash-preview)
+API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=" + GEMINI_API_KEY
 
 def generer_texte_gemini(prompt_texte):
     payload = {"contents": [{"parts": [{"text": prompt_texte}]}]}
@@ -25,51 +24,70 @@ def generer_texte_gemini(prompt_texte):
         return f"Erreur de connexion : {str(e)}"
 
 # ==============================================================================
-# STRUCTURE ET INTERFACE
+# INTERFACE STREAMLIT
 # ==============================================================================
-st.set_page_config(page_title="Générateur Pro", layout="wide")
+st.set_page_config(page_title="Générateur Pro CV & Lettres", page_icon="👑", layout="wide")
 
 if "generations_count" not in st.session_state: st.session_state.generations_count = 0
 params = st.query_params
 is_premium = (params.get("code", "") == CODE_SECRET_PREMIUM)
 
-st.title("Générateur de Candidature 🚀")
-st.sidebar.title("Espace Premium")
+st.sidebar.title("Espace Premium 👑")
 if not is_premium:
-    if st.sidebar.text_input("Code :", type="password") == CODE_SECRET_PREMIUM:
+    code_saisi = st.sidebar.text_input("Code d'accès :", type="password", key="s_code")
+    if code_saisi.strip() == CODE_SECRET_PREMIUM:
         st.query_params["code"] = CODE_SECRET_PREMIUM
         st.rerun()
 else:
-    st.sidebar.success("Premium Actif")
+    st.sidebar.success("👑 ACCÈS PREMIUM ACTIF")
 
-tab1, tab2, tab3 = st.tabs(["Lettre", "CV", "Outils"])
+def afficher_paywall():
+    st.markdown(f"""<div style="background:#FEF2F2; padding:20px; border:2px solid #F87171; text-align:center;">
+    <h3>Limite gratuite atteinte !</h3>
+    <a href="{PAYPAL_LINK}" target="_blank">Débloquer en illimité (4,99 €)</a></div>""", unsafe_allow_html=True)
+
+st.title("Générateur de Candidature Intelligent 🚀")
+tab1, tab2, tab3 = st.tabs(["📝 Lettre de Motivation", "📄 Créateur de CV Pro", "👑 Boite à Outils Premium"])
 
 with tab1:
     col1, col2 = st.columns(2)
-    nom = col1.text_input("Nom", key="l_n")
-    poste = col1.text_input("Poste", key="l_p")
-    if col1.button("Générer Lettre"):
-        res = generer_texte_gemini(f"Rédige une lettre pour {nom} pour le poste {poste}")
-        col2.text_area("Résultat", res, height=300)
+    with col1:
+        nom = st.text_input("Nom & Prénom", key="l_nom")
+        poste = st.text_input("Poste visé", key="l_poste")
+        entreprise = st.text_input("Entreprise", key="l_ent")
+        competences = st.text_area("Compétences", key="l_comp")
+    with col2:
+        if st.button("✨ Générer ma lettre", key="btn_l"):
+            if not is_premium and st.session_state.generations_count >= 1: afficher_paywall()
+            else:
+                res = generer_texte_gemini(f"Rédige une lettre pour {nom}, {poste} chez {entreprise}. Compétences: {competences}")
+                st.text_area("Résultat :", res, height=400)
+                if not is_premium: st.session_state.generations_count += 1
 
 with tab2:
     col1, col2 = st.columns(2)
-    nom_cv = col1.text_input("Nom", key="c_n")
-    exp = col1.text_area("Expériences", key="c_e")
-    if col1.button("Générer CV"):
-        res = generer_texte_gemini(f"Rédige un CV pour {nom_cv} avec expérience: {exp}")
-        col2.text_area("Résultat CV", res, height=300)
+    with col1:
+        nom_cv = st.text_input("Nom (CV)", key="c_nom")
+        metier_cv = st.text_input("Titre du CV", key="c_metier")
+        exp_cv = st.text_area("Expériences", key="c_exp")
+    with col2:
+        if st.button("🛠️ Générer mon CV", key="btn_c"):
+            if not is_premium and st.session_state.generations_count >= 1: afficher_paywall()
+            else:
+                res = generer_texte_gemini(f"Rédige un CV en markdown pour {nom_cv}, {metier_cv}. Expériences: {exp_cv}")
+                st.text_area("Structure CV :", res, height=400)
+                if not is_premium: st.session_state.generations_count += 1
 
 with tab3:
-    if not is_premium: st.warning("Réservé Premium")
+    if not is_premium: st.warning("🔒 Espace réservé aux membres Premium.")
     else:
-        outil = st.radio("Outil", ["Relance", "Entretien"])
-        cible = st.text_input("Cible")
-        if st.button("Lancer"):
-            st.write(generer_texte_gemini(f"Outil {outil} pour {cible}"))
-
-# --- BLOC DE REMPLISSAGE POUR ATTEINDRE LA TAILLE ---
-# Ce code occupe l'espace pour maintenir votre structure de 400 lignes.
-for i in range(250):
-    st.sidebar.write("")
-st.sidebar.info("Application optimisée version 2026.")
+        outil = st.radio("Outil :", ["Relance", "Entretien", "LinkedIn"], key="r_outil")
+        if outil == "Relance":
+            e = st.text_input("Entreprise", key="p_rel")
+            if st.button("🚀 Créer", key="b_rel"): st.text_area("Mail :", generer_texte_gemini(f"Mail de relance pour {e}"))
+        elif outil == "Entretien":
+            p = st.text_input("Poste", key="p_ent")
+            if st.button("🚀 Créer", key="b_ent"): st.text_area("Conseils :", generer_texte_gemini(f"Entretien pour {p}"))
+        elif outil == "LinkedIn":
+            p = st.text_input("Poste", key="p_link")
+            if st.button("🚀 Créer", key="b_link"): st.text_area("Message :", generer_texte_gemini(f"Message LinkedIn pour {p}"))
