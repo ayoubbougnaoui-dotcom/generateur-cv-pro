@@ -15,21 +15,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ==============================================================================
-# RÉCUPÉRATION SÉCURISÉE DE LA CLÉ API GEMINI
-# ==============================================================================
-# 1. On essaie de récupérer la clé depuis les secrets Streamlit
-api_key = st.secrets.get("GEMINI_API_KEY", None)
-
-# 2. Si elle n'y est pas, on propose un champ de saisie discret dans la sidebar
-if not api_key:
-    api_key = st.sidebar.text_input("🔑 Clé API Gemini", type="password")
-
-if api_key:
-    genai.configure(api_key=api_key)
-else:
-    st.sidebar.warning("⚠️ Veuillez configurer votre clé API Gemini dans les secrets Streamlit.")
-
 # Custom CSS pour une interface moderne et haut de gamme
 st.markdown("""
 <style>
@@ -77,9 +62,21 @@ if "is_premium" not in st.session_state:
     st.session_state.is_premium = False
 
 # ==============================================================================
-# BARRE LATÉRALE - ESPACE PREMIUM & PAIEMENT
+# BARRE LATÉRALE - CONFIGURATION & ESPACE PREMIUM
 # ==============================================================================
 st.sidebar.image("https://img.icons8.com/fluent/96/000000/crown.png", width=60)
+st.sidebar.title("Configuration & IA")
+
+# Champ pour entrer la clé directement dans l'interface
+user_api_key = st.sidebar.text_input("🔑 Entrez votre Clé API Gemini :", type="password")
+
+if user_api_key:
+    genai.configure(api_key=user_api_key)
+    st.sidebar.success("✅ IA connectée avec succès")
+else:
+    st.sidebar.warning("⚠️ Veuillez entrer une clé API pour activer l'IA.")
+
+st.sidebar.markdown("---")
 st.sidebar.title("Espace Premium 👑")
 
 code_saisi = st.sidebar.text_input("Tu as payé ? Entre ton code d'accès :", type="password")
@@ -200,8 +197,8 @@ with tab1:
         st.info("💡 Plus vous donnez de détails sur vos forces, plus la lettre rédigée par l'IA sera personnalisée et convaincante !")
         
         if st.button("✨ Générer ma lettre de motivation", use_container_width=True, type="primary"):
-            if not api_key:
-                st.error("Veuillez d'abord configurer votre clé API Gemini.")
+            if not user_api_key:
+                st.error("Veuillez entrer votre clé API Gemini dans la barre latérale gauche.")
             elif not nom_complet or not poste_vise or not entreprise_cible:
                 st.warning("Veuillez remplir au moins votre nom, le poste visé et l'entreprise.")
             elif not peut_generer():
@@ -281,14 +278,14 @@ with tab2:
         st.info("💡 L'IA va transformer vos notes brutes en un CV ultra-professionnel, réécrire vos missions de manière valorisante et structurer le tout proprement.")
         
         if st.button("🛠️ Générer mon CV optimisé", use_container_width=True, type="primary"):
-            if not api_key:
-                st.error("Veuillez d'abord configurer votre clé API Gemini.")
+            if not user_api_key:
+                st.error("Veuillez entrer votre clé API Gemini dans la barre latérale gauche.")
             elif not nom_cv or not metier_cv:
                 st.warning("Veuillez indiquer au moins votre nom et votre titre de métier.")
             elif not peut_generer():
                 afficher_paywall()
             else:
-                with st.spinner("Mise en valeur de profil par notre IA..."):
+                with st.spinner("Mise en valeur de votre profil par notre IA..."):
                     try:
                         prompt_cv = f"""
                         Tu es un coach en carrière et un concepteur de CV professionnel.
@@ -371,12 +368,15 @@ with tab3:
             
             with col_r2:
                 if st.button("🚀 Créer l'e-mail de relance", use_container_width=True, type="primary"):
-                    with st.spinner("Génération de la relance..."):
-                        prompt_rel = f"Rédige un e-mail de relance court, extrêmement courtois et professionnel pour une candidature au poste de {rel_poste} chez {rel_ent} envoyée il y a {rel_temps}. Le style doit être {rel_ton}."
-                        model = genai.GenerativeModel("gemini-1.5-flash")
-                        response = model.generate_content(prompt_rel)
-                        st.success("Votre relance est prête !")
-                        st.text_area("Message de relance :", response.text, height=250)
+                    if not user_api_key:
+                        st.error("Veuillez entrer votre clé API Gemini dans la barre latérale.")
+                    else:
+                        with st.spinner("Génération de la relance..."):
+                            prompt_rel = f"Rédige un e-mail de relance court, extrêmement courtois et professionnel pour une candidature au poste de {rel_poste} chez {rel_ent} envoyée il y a {rel_temps}. Le style doit être {rel_ton}."
+                            model = genai.GenerativeModel("gemini-1.5-flash")
+                            response = model.generate_content(prompt_rel)
+                            st.success("Votre relance est prête !")
+                            st.text_area("Message de relance :", response.text, height=250)
 
         elif choix_outil == "👔 Préparation à l'entretien":
             st.markdown("#### Anticipateur de questions d'entretien IA")
@@ -388,12 +388,15 @@ with tab3:
             
             with col_p2:
                 if st.button("🎯 Préparer mon entretien", use_container_width=True, type="primary"):
-                    with st.spinner("Analyse du poste et simulation..."):
-                        prompt_prep = f"Tu es un recruteur professionnel pour {prep_ent}. Le candidat passe un entretien pour {prep_poste}. Compétences : {prep_desc}. Donne les 3 questions les plus piégeuses, ce que le recruteur cherche, et la meilleure réponse type."
-                        model = genai.GenerativeModel("gemini-1.5-flash")
-                        response = model.generate_content(prompt_prep)
-                        st.success("Fiches de révision prêtes !")
-                        st.write(response.text)
+                    if not user_api_key:
+                        st.error("Veuillez entrer votre clé API Gemini dans la barre latérale.")
+                    else:
+                        with st.spinner("Analyse du poste et simulation..."):
+                            prompt_prep = f"Tu es un recruteur professionnel pour {prep_ent}. Le candidat passe un entretien pour {prep_poste}. Compétences : {prep_desc}. Donne les 3 questions les plus piégeuses, ce que le recruteur cherche, et la meilleure réponse type."
+                            model = genai.GenerativeModel("gemini-1.5-flash")
+                            response = model.generate_content(prompt_prep)
+                            st.success("Fiches de révision prêtes !")
+                            st.write(response.text)
 
         elif choix_outil == "💬 Message LinkedIn d'approche directe":
             st.markdown("#### Générateur de message court pour LinkedIn")
@@ -406,12 +409,15 @@ with tab3:
             
             with col_l2:
                 if st.button("📲 Rédiger le message LinkedIn", use_container_width=True, type="primary"):
-                    with st.spinner("Synthèse du message direct..."):
-                        nom_rec_text = link_recruteur if link_recruteur else "le recruteur"
-                        prompt_link = f"Rédige un message de prise de contact direct ultra-court pour LinkedIn (300-400 caractères) pour {nom_rec_text} pour le poste de {link_poste} chez {link_entreprise}. Atout : {link_accroche}."
-                        model = genai.GenerativeModel("gemini-1.5-flash")
-                        response = model.generate_content(prompt_link)
-                        st.success("Message LinkedIn rédigé !")
-                        st.text_area("Votre message d'approche :", response.text, height=200)
+                    if not user_api_key:
+                        st.error("Veuillez entrer votre clé API Gemini dans la barre latérale.")
+                    else:
+                        with st.spinner("Synthèse du message direct..."):
+                            nom_rec_text = link_recruteur if link_recruteur else "le recruteur"
+                            prompt_link = f"Rédige un message de prise de contact direct ultra-court pour LinkedIn (300-400 caractères) pour {nom_rec_text} pour le poste de {link_poste} chez {link_entreprise}. Atout : {link_accroche}."
+                            model = genai.GenerativeModel("gemini-1.5-flash")
+                            response = model.generate_content(prompt_link)
+                            st.success("Message LinkedIn rédigé !")
+                            st.text_area("Votre message d'approche :", response.text, height=200)
 
 st.markdown("<hr style='margin-top:50px;'><p style='text-align:center; color:#94A3B8; font-size:12px;'>Générateur Pro CV & Lettres de Motivation © 2026. Tous droits réservés.</p>", unsafe_allow_html=True)
