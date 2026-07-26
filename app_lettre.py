@@ -2,7 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 
 # ==============================================================================
-# CONFIGURATION ET LIENS DE PAIEMENT (À MODIFIER SI BESOIN)
+# CONFIGURATION ET LIENS DE PAIEMENT
 # ==============================================================================
 PAYPAL_LINK = "https://paypal.me/Ayoub212500/4.99EUR"
 CODE_SECRET_PREMIUM = "PREMIUM2026"
@@ -14,6 +14,21 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# ==============================================================================
+# RÉCUPÉRATION SÉCURISÉE DE LA CLÉ API GEMINI
+# ==============================================================================
+# 1. On essaie de récupérer la clé depuis les secrets Streamlit
+api_key = st.secrets.get("GEMINI_API_KEY", None)
+
+# 2. Si elle n'y est pas, on propose un champ de saisie discret dans la sidebar
+if not api_key:
+    api_key = st.sidebar.text_input("🔑 Clé API Gemini", type="password")
+
+if api_key:
+    genai.configure(api_key=api_key)
+else:
+    st.sidebar.warning("⚠️ Veuillez configurer votre clé API Gemini dans les secrets Streamlit.")
 
 # Custom CSS pour une interface moderne et haut de gamme
 st.markdown("""
@@ -53,19 +68,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-# ==============================================================================
-# GESTION DES CLÉS API ET DE L'ÉTAT DE L'APPLICATION
-# ==============================================================================
-api_key = st.secrets.get("GEMINI_API_KEY", None)
-
-if not api_key:
-    api_key = st.sidebar.text_input("🔑 Clé API Gemini (Optionnel si configuré en secret)", type="password")
-
-if api_key:
-    genai.configure(api_key=api_key)
-else:
-    st.sidebar.warning("⚠️ Attention : Aucune clé API Gemini détectée. Configurez-la dans les secrets Streamlit ou saisissez-la ci-dessus pour faire fonctionner l'IA.")
 
 # Initialisation des variables de session
 if "generations_count" not in st.session_state:
@@ -286,7 +288,7 @@ with tab2:
             elif not peut_generer():
                 afficher_paywall()
             else:
-                with st.spinner("Mise en valeur de votre profil par notre IA..."):
+                with st.spinner("Mise en valeur de profil par notre IA..."):
                     try:
                         prompt_cv = f"""
                         Tu es un coach en carrière et un concepteur de CV professionnel.
