@@ -57,10 +57,8 @@ st.markdown("""
 # ==============================================================================
 # GESTION DES CLÉS API ET DE L'ÉTAT DE L'APPLICATION
 # ==============================================================================
-# Essayer de récupérer la clé API depuis les secrets de Streamlit
 api_key = st.secrets.get("GEMINI_API_KEY", None)
 
-# Si pas de clé dans les secrets, on propose un champ caché dans la barre latérale
 if not api_key:
     api_key = st.sidebar.text_input("🔑 Clé API Gemini (Optionnel si configuré en secret)", type="password")
 
@@ -82,7 +80,6 @@ if "is_premium" not in st.session_state:
 st.sidebar.image("https://img.icons8.com/fluent/96/000000/crown.png", width=60)
 st.sidebar.title("Espace Premium 👑")
 
-# Entrée du code d'accès
 code_saisi = st.sidebar.text_input("Tu as payé ? Entre ton code d'accès :", type="password")
 
 if code_saisi:
@@ -96,13 +93,11 @@ else:
     if not st.session_state.is_premium:
         st.sidebar.info("💡 Mode gratuit actif (Limité à 1 essai global)")
 
-# Compteur d'essais pour l'utilisateur
 if not st.session_state.is_premium:
     st.sidebar.write(f"📊 Essai gratuit utilisé : **{st.session_state.generations_count} / 1**")
 else:
     st.sidebar.write("📊 Utilisation : **Illimitée ♾️**")
 
-# Bouton de paiement visible si non premium
 if not st.session_state.is_premium:
     st.sidebar.markdown(f"""
     <hr style="margin: 20px 0;">
@@ -142,7 +137,6 @@ def afficher_paywall():
     </div>
     """, unsafe_allow_html=True)
 
-# Vérification d'autorisation de générer
 def peut_generer():
     if st.session_state.is_premium:
         return True
@@ -150,7 +144,6 @@ def peut_generer():
         return True
     return False
 
-# Incremente après chaque génération réussie
 def enregistrer_generation():
     if not st.session_state.is_premium:
         st.session_state.generations_count += 1
@@ -161,7 +154,6 @@ def enregistrer_generation():
 st.markdown("<div class='main-title'>Générateur de Candidature Intelligent 🚀</div>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>L'intelligence artificielle au service de votre réussite professionnelle</div>", unsafe_allow_html=True)
 
-# Création des onglets de navigation
 tab1, tab2, tab3 = st.tabs([
     "📝 Lettre de Motivation", 
     "📄 Créateur de CV Pro", 
@@ -185,7 +177,6 @@ with tab1:
             placeholder="Ex: Sens du service client, dynamisme, esprit d'équipe, 2 ans d'expérience dans le prêt-à-porter..."
         )
         
-        # Option Premium : Choix du ton
         if st.session_state.is_premium:
             st.markdown("<span class='premium-badge'>👑 OPTION PREMIUM ACTIVE</span>", unsafe_allow_html=True)
             ton_lettre = st.selectbox(
@@ -216,10 +207,9 @@ with tab1:
             else:
                 with st.spinner("Rédaction de votre lettre personnalisée en cours..."):
                     try:
-                        # Construction du prompt selon le ton sélectionné
                         style_instruction = ""
                         if "Dynamique" in ton_lettre:
-                            style_instruction = "Utilise un style direct, moderne, énergique et très enthousiaste, tout en restant professionnel. Évite les formules de politesse trop lourdes du XIXe siècle."
+                            style_instruction = "Utilise un style direct, moderne, énergique et très enthousiaste, tout en restant professionnel. Évite les formules de politesse trop lourdes."
                         elif "Créatif" in ton_lettre:
                             style_instruction = "Utilise un style original, captivant, audacieux qui montre une vraie personnalité unique. Débute par une accroche percutante."
                         else:
@@ -251,10 +241,9 @@ with tab1:
                         model = genai.GenerativeModel("gemini-1.5-flash")
                         response = model.generate_content(prompt_lettre)
                         
-                        st.success("Réfactions terminée avec succès ! 🎉")
+                        st.success("Rédaction terminée avec succès ! 🎉")
                         st.text_area("Copiez votre lettre ci-dessous :", response.text, height=450)
                         
-                        # Enregistrement de l'action
                         enregistrer_generation()
                     except Exception as e:
                         st.error(f"Une erreur est survenue : {e}")
@@ -289,7 +278,6 @@ with tab2:
     with col_cv2:
         st.info("💡 L'IA va transformer vos notes brutes en un CV ultra-professionnel, réécrire vos missions de manière valorisante et structurer le tout proprement.")
         
-        # Bouton réservé aux premiums ou au premier essai
         if st.button("🛠️ Générer mon CV optimisé", use_container_width=True, type="primary"):
             if not api_key:
                 st.error("Veuillez d'abord configurer votre clé API Gemini.")
@@ -303,7 +291,7 @@ with tab2:
                         prompt_cv = f"""
                         Tu es un coach en carrière et un concepteur de CV professionnel.
                         À partir des données brutes suivantes, rédige un CV structuré en Markdown.
-                        Réécris les expériences pour les rendre extrêmement valorisantes (utilise des verbes d'action, mets en avant les réalisations).
+                        Réécris les expériences pour les rendre extrêmement valorisantes.
                         
                         Données reçues :
                         - Nom : {nom_cv}
@@ -316,12 +304,12 @@ with tab2:
                         
                         Structure attendue pour le résultat :
                         1. En-tête centré avec Nom, Métier et Contacts.
-                        2. Un court paragraphe d'accroche (profil professionnel) de 3 lignes maximum accrocheur et adapté au métier.
+                        2. Un court paragraphe d'accroche (profil professionnel) de 3 lignes maximum.
                         3. Section "Expériences Professionnelles" propre avec puces stylisées.
                         4. Section "Formations" bien alignée.
-                        5. Section "Compétences" classée par catégories logiques (ex: Compétences techniques, Qualités personnelles).
+                        5. Section "Compétences" classée par catégories logiques.
                         
-                        Fais en sorte que le résultat soit clair, percutant et prêt à être copié-collé dans un traitement de texte.
+                        Fais en sorte que le résultat soit clair, percutant et prêt à être copié-collé.
                         """
                         
                         model = genai.GenerativeModel("gemini-1.5-flash")
@@ -330,7 +318,6 @@ with tab2:
                         st.success("Votre CV est prêt ! Copiez le texte ci-dessous :")
                         st.text_area("Structure et textes optimisés du CV :", response.text, height=450)
                         
-                        # Enregistrement de l'action
                         enregistrer_generation()
                     except Exception as e:
                         st.error(f"Une erreur est survenue lors de la création du CV : {e}")
@@ -341,19 +328,16 @@ with tab2:
 with tab3:
     st.subheader("Boîte à outils Premium 👑")
     
-    # Vérification d'accès à l'onglet Premium
     if not st.session_state.is_premium:
-        st.warning("🔒 Cet espace est réservé aux membres Premium. Payez une seule fois pour débloquer toutes ces fonctionnalités d'accélération de carrière.")
+        st.warning("🔒 Cet espace est réservé aux membres Premium. Payez une seule fois pour débloquer toutes ces fonctionnalités.")
         
-        # Aperçu visuel des outils pour donner envie
         st.markdown("""
         ### Découvrez ce qui vous attend dans l'espace Premium :
-        - 📞 **Le Relanceur Automatique :** Générez des e-mails de relance professionnels de candidatures pour relancer les recruteurs au bon moment sans paraître insistant.
-        - 👔 **Simulateur d'Entretien :** Obtenez les 3 questions les plus piégeuses basées sur le poste choisi et apprenez à y répondre parfaitement.
-        - 💬 **L'Approche Directe LinkedIn :** Convertissez votre profil en un message de prise de contact ultra-court de 4 à 5 lignes pour contacter les recruteurs en direct.
+        - 📞 **Le Relanceur Automatique :** Générez des e-mails de relance professionnels.
+        - 👔 **Simulateur d'Entretien :** Obtenez les 3 questions les plus piégeuses.
+        - 💬 **L'Approche Directe LinkedIn :** Convertissez votre profil en un message court.
         """)
         
-        # Rappel du bouton de paiement
         st.markdown(f"""
         <div style="text-align: center; margin-top:20px;">
             <a href="{PAYPAL_LINK}" target="_blank">
@@ -374,7 +358,6 @@ with tab3:
         
         st.markdown("<hr>", unsafe_allow_html=True)
         
-        # ----------------- OUTIL 1 : RELANCE AUTOMATIQUE -----------------
         if choix_outil == "📞 Relance de candidature (Suivi)":
             st.markdown("#### Générateur d'e-mail de relance professionnel")
             col_r1, col_r2 = st.columns(2)
@@ -387,62 +370,46 @@ with tab3:
             with col_r2:
                 if st.button("🚀 Créer l'e-mail de relance", use_container_width=True, type="primary"):
                     with st.spinner("Génération de la relance..."):
-                        prompt_rel = f"Rédige un e-mail de relance court, extrêmement courtois et professionnel pour une candidature au poste de {rel_poste} chez {rel_ent} envoyée il y a {rel_temps}. Le style doit être {rel_ton}. Rappelle subtilement la motivation à rejoindre l'équipe sans paraître impatient."
+                        prompt_rel = f"Rédige un e-mail de relance court, extrêmement courtois et professionnel pour une candidature au poste de {rel_poste} chez {rel_ent} envoyée il y a {rel_temps}. Le style doit être {rel_ton}."
                         model = genai.GenerativeModel("gemini-1.5-flash")
                         response = model.generate_content(prompt_rel)
                         st.success("Votre relance est prête !")
                         st.text_area("Message de relance :", response.text, height=250)
 
-        # ----------------- OUTIL 2 : PRÉPARATION ENTRETIEN -----------------
         elif choix_outil == "👔 Préparation à l'entretien":
             st.markdown("#### Anticipateur de questions d'entretien IA")
             col_p1, col_p2 = st.columns(2)
             with col_p1:
                 prep_poste = st.text_input("Poste pour l'entretien", placeholder="Ex: Vendeur Conseil")
                 prep_ent = st.text_input("Entreprise de l'entretien", placeholder="Ex: Zara")
-                prep_desc = st.text_area("Description rapide du job (ou compétences attendues)", placeholder="Ex: Accueil, conseil client, réassort, dynamisme demandé.")
+                prep_desc = st.text_area("Description rapide du job", placeholder="Ex: Accueil, conseil client, réassort.")
             
             with col_p2:
                 if st.button("🎯 Préparer mon entretien", use_container_width=True, type="primary"):
                     with st.spinner("Analyse du poste et simulation..."):
-                        prompt_prep = f"Tu es un recruteur professionnel pour l'entreprise {prep_ent}. Le candidat passe un entretien pour le poste de {prep_poste}. Compétences clés : {prep_desc}. Sors les 3 questions les plus piégeuses et pertinentes que tu lui poserais spécifiquement pour ce poste, et pour CHAQUE question, donne l'explication de ce que le recruteur cherche à comprendre ainsi que la meilleure réponse type à formuler."
+                        prompt_prep = f"Tu es un recruteur professionnel pour {prep_ent}. Le candidat passe un entretien pour {prep_poste}. Compétences : {prep_desc}. Donne les 3 questions les plus piégeuses, ce que le recruteur cherche, et la meilleure réponse type."
                         model = genai.GenerativeModel("gemini-1.5-flash")
                         response = model.generate_content(prompt_prep)
-                        st.success("Fiches de révision d'entretien prêtes !")
+                        st.success("Fiches de révision prêtes !")
                         st.write(response.text)
 
-        # ----------------- OUTIL 3 : MESSAGE LINKEDIN -----------------
         elif choix_outil == "💬 Message LinkedIn d'approche directe":
             st.markdown("#### Générateur de message court pour LinkedIn")
             col_l1, col_l2 = st.columns(2)
             with col_l1:
-                link_recruteur = st.text_input("Nom du recruteur (si connu)", placeholder="Ex: Sophie Martin (laissez vide si inconnu)")
+                link_recruteur = st.text_input("Nom du recruteur (optionnel)", placeholder="Ex: Sophie Martin")
                 link_poste = st.text_input("Poste ciblé", placeholder="Ex: Développeur Web Junior")
                 link_entreprise = st.text_input("Entreprise ciblée", placeholder="Ex: Leroy Merlin")
-                link_accroche = st.text_input("Votre atout principal en une phrase", placeholder="Ex: Autodidacte passionné avec 3 projets d'application en ligne.")
-                
+                link_accroche = st.text_input("Votre atout principal", placeholder="Ex: Autodidacte passionné.")
+            
             with col_l2:
                 if st.button("📲 Rédiger le message LinkedIn", use_container_width=True, type="primary"):
                     with st.spinner("Synthèse du message direct..."):
                         nom_rec_text = link_recruteur if link_recruteur else "le recruteur"
-                        prompt_link = f"Rédige un message de prise de contact direct ultra-court pour LinkedIn (maximum 300 à 400 caractères, idéal pour un message privé d'invitation) destiné à {nom_rec_text} pour exprimer de l'intérêt pour le poste de {link_poste} chez {link_entreprise}. Inclus l'atout suivant : {link_accroche}. Le ton doit être professionnel, percutant et inciter à une brève réponse."
+                        prompt_link = f"Rédige un message de prise de contact direct ultra-court pour LinkedIn (300-400 caractères) pour {nom_rec_text} pour le poste de {link_poste} chez {link_entreprise}. Atout : {link_accroche}."
                         model = genai.GenerativeModel("gemini-1.5-flash")
                         response = model.generate_content(prompt_link)
                         st.success("Message LinkedIn rédigé !")
                         st.text_area("Votre message d'approche :", response.text, height=200)
 
-# Pied de page discret
 st.markdown("<hr style='margin-top:50px;'><p style='text-align:center; color:#94A3B8; font-size:12px;'>Générateur Pro CV & Lettres de Motivation © 2026. Tous droits réservés.</p>", unsafe_allow_html=True)
-```eof
-
-### Qu'est-ce que j'ai changé et ajouté dans ce code ?
-
-1. **Unification des codes (CV + Lettre) :** Tu trouveras le créateur de CV complet dans l'onglet numéro 2, avec des formulaires spécifiques (expériences, formations, compétences).
-2. **La suite Premium complète :** L'onglet numéro 3 est maintenant un espace magique ! Si l'utilisateur n'est pas premium, il voit un aperçu alléchant avec un bouton PayPal. S'il valide ton code secret, il débloque :
-   * Le générateur d'e-mail de relance automatique (📞).
-   * L'outil de préparation aux questions d'entretien (👔).
-   * Le créateur de messages d'approche directe sur LinkedIn (💬).
-3. **Le système de verrouillage automatique :** Tout est protégé. Un utilisateur gratuit n'a le droit qu'à **un seul essai global** sur le site (que ce soit pour une lettre ou un CV). Dès que l'essai est consommé, un panneau d'alerte rouge s'affiche à la place des boutons pour l'inviter à acheter son pass sur ton PayPal.
-4. **Le code secret :** Le code est configuré à la ligne 10 de ton application (`PREMIUM2026`).
-
-Ton application est désormais une véritable agence de recrutement automatisée de haut niveau ! Copie ce code, remplace-le sur ton fichier GitHub et regarde la magie opérer. Dis-moi si tout est nickel pour toi !
