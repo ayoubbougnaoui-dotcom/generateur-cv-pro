@@ -16,7 +16,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS pour une interface moderne et haut de gamme
+# Custom CSS
 st.markdown("""
 <style>
     .main-title {
@@ -67,15 +67,25 @@ if "is_premium" not in st.session_state:
 st.sidebar.image("https://img.icons8.com/fluent/96/000000/crown.png", width=60)
 st.sidebar.title("Configuration & IA (Groq)")
 
-# Récupération prioritaire de la clé via variable d'environnement
-api_key = os.environ.get("GROQ_API_KEY")
+# ---------- RÉCUPÉRATION DE LA CLÉ API (CORRIGÉ) ----------
+api_key = None
 
-# Champ pour entrer la clé manuellement si pas de variable d'environnement
+# 1. Essayer de récupérer depuis Streamlit Secrets (Cloud)
+try:
+    api_key = st.secrets["GROQ_API_KEY"]
+except:
+    pass
+
+# 2. Sinon essayer la variable d'environnement
+if not api_key:
+    api_key = os.environ.get("GROQ_API_KEY")
+
+# Champ pour entrer la clé manuellement (utile en local)
 user_api_key = st.sidebar.text_input(
     "🔑 Entrez votre Clé API Groq :",
     type="password",
     value=api_key if api_key else "",
-    help="Vous pouvez aussi définir la variable d'environnement GROQ_API_KEY"
+    help="Sur Streamlit Cloud, mettez la clé dans Secrets"
 )
 
 client = None
@@ -89,7 +99,7 @@ if user_api_key:
     except Exception as e:
         st.sidebar.error(f"Erreur d'initialisation : {e}")
 else:
-    st.sidebar.warning("⚠️ Veuillez entrer une clé API Groq (console.groq.com) ou définir GROQ_API_KEY.")
+    st.sidebar.warning("⚠️ Veuillez entrer une clé API Groq ou la définir dans les Secrets.")
 
 st.sidebar.markdown("---")
 st.sidebar.title("Espace Premium 👑")
@@ -120,7 +130,7 @@ if not st.session_state.is_premium:
             Débloquez le créateur de CV, le message LinkedIn, la relance automatique, le choix des tons et les questions d'entretien d'embauche en illimité !
         </p>
         <a href="{PAYPAL_LINK}" target="_blank" style="text-decoration:none;">
-            <button style="background-color:#EF4444; color:white; border:none; padding:10px 15px; font-size:14px; font-weight:bold; border-radius:5px; cursor:pointer; width:100%; transition: 0.3s;">
+            <button style="background-color:#EF4444; color:white; border:none; padding:10px 15px; font-size:14px; font-weight:bold; border-radius:5px; cursor:pointer; width:100%;">
                 Débloquer l'accès (4,99 €)
             </button>
         </a>
@@ -128,24 +138,24 @@ if not st.session_state.is_premium:
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# COMPOSANT PAYWALL
+# FONCTIONS UTILES
 # ==============================================================================
 def afficher_paywall():
     st.markdown(f"""
     <div style="background-color:#FEF2F2; padding:30px; border-radius:15px; border:2px solid #F87171; text-align:center; margin-top: 20px;">
         <h2 style="color:#DC2626; margin-top:0;">🛑 Limite de la version gratuite atteinte !</h2>
         <p style="font-size:18px; color:#374151; font-weight:500;">
-            Vous avez utilisé votre essai gratuit. Pour débloquer l'accès complet et générer vos documents en illimité, rejoignez nos membres Premium.
+            Vous avez utilisé votre essai gratuit. Pour débloquer l'accès complet, rejoignez nos membres Premium.
         </p>
         <div style="margin: 25px 0;">
             <a href="{PAYPAL_LINK}" target="_blank" style="text-decoration:none;">
-                <button style="background-color:#DC2626; color:white; border:none; padding:15px 30px; font-size:20px; font-weight:bold; border-radius:8px; cursor:pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); width: 100%; max-width: 400px;">
+                <button style="background-color:#DC2626; color:white; border:none; padding:15px 30px; font-size:20px; font-weight:bold; border-radius:8px; cursor:pointer; width: 100%; max-width: 400px;">
                     👉 Débloquer sur PayPal (4,99 €)
                 </button>
             </a>
         </div>
         <p style="font-size:14px; color:#6B7280;">
-            🔒 Paiement sécurisé via PayPal. Une fois le paiement effectué, vous recevrez instantanément votre code secret à saisir dans la barre latérale de gauche.
+            🔒 Paiement sécurisé via PayPal. Une fois le paiement effectué, vous recevrez votre code secret.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -162,7 +172,6 @@ def enregistrer_generation():
         st.session_state.generations_count += 1
 
 def appeler_groq(prompt: str) -> str:
-    """Appelle le modèle llama-3.3-70b-versatile via Groq."""
     chat_completion = client.chat.completions.create(
         messages=[{"role": "user", "content": prompt}],
         model="llama-3.3-70b-versatile",
@@ -172,7 +181,7 @@ def appeler_groq(prompt: str) -> str:
     return chat_completion.choices[0].message.content
 
 # ==============================================================================
-# CORPS PRINCIPAL DE L'APPLICATION
+# CORPS PRINCIPAL
 # ==============================================================================
 st.markdown("<div class='main-title'>Générateur de Candidature Intelligent 🚀</div>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>L'intelligence artificielle au service de votre réussite professionnelle</div>", unsafe_allow_html=True)
@@ -197,7 +206,7 @@ with tab1:
         entreprise_cible = st.text_input("Entreprise", placeholder="Ex: Nike")
         competences_cles = st.text_area(
             "Vos compétences clés & points forts (séparés par des virgules)",
-            placeholder="Ex: Sens du service client, dynamisme, esprit d'équipe, 2 ans d'expérience dans le prêt-à-porter..."
+            placeholder="Ex: Sens du service client, dynamisme, esprit d'équipe..."
         )
        
         if st.session_state.is_premium:
@@ -230,13 +239,12 @@ with tab1:
             else:
                 with st.spinner("Rédaction de votre lettre personnalisée en cours..."):
                     try:
-                        style_instruction = ""
                         if "Dynamique" in ton_lettre:
-                            style_instruction = "Utilise un style direct, moderne, énergique et très enthousiaste, tout en restant professionnel. Évite les formules de politesse trop lourdes."
+                            style_instruction = "Utilise un style direct, moderne, énergique et très enthousiaste, tout en restant professionnel."
                         elif "Créatif" in ton_lettre:
-                            style_instruction = "Utilise un style original, captivant, audacieux qui montre une vraie personnalité unique. Débute par une accroche percutante."
+                            style_instruction = "Utilise un style original, captivant, audacieux. Débute par une accroche percutante."
                         else:
-                            style_instruction = "Utilise des tournures de phrases classiques, hautement professionnelles et polies adaptées au monde de l'entreprise traditionnel."
+                            style_instruction = "Utilise des tournures de phrases classiques, hautement professionnelles et polies."
 
                         prompt_lettre = f"""
                         Tu es un rédacteur professionnel expert en recrutement.
@@ -250,13 +258,13 @@ with tab1:
                        
                         Style demandé : {style_instruction}
                        
-                        La structure de la lettre doit être la suivante :
-                        1. En-tête (Informations de contact fictives à remplacer, date du jour)
+                        Structure de la lettre :
+                        1. En-tête (Informations de contact fictives, date du jour)
                         2. Objet de la lettre clair
-                        3. Accroche captivante (Le 'Moi')
-                        4. Pourquoi cette entreprise spécifique et le lien avec le candidat (Le 'Vous')
-                        5. Ce que le candidat apporte à l'équipe (Le 'Nous')
-                        6. Appel à l'action pour un entretien et formule de politesse soignée.
+                        3. Accroche captivante
+                        4. Pourquoi cette entreprise
+                        5. Ce que le candidat apporte
+                        6. Appel à l'action et formule de politesse
                        
                         Rends le texte immédiatement exploitable et chaleureux.
                         """
@@ -271,7 +279,7 @@ with tab1:
                         st.error(f"Une erreur est survenue : {e}")
 
 # ------------------------------------------------------------------------------
-# ONGLET 2 : CRÉATEUR DE CV PROFESSIONNEL
+# ONGLET 2 : CRÉATEUR DE CV
 # ------------------------------------------------------------------------------
 with tab2:
     st.subheader("Générateur de structure de CV Professionnel")
@@ -286,7 +294,7 @@ with tab2:
        
         experiences_cv = st.text_area(
             "Vos expériences professionnelles (Poste, Entreprise, Dates, Missions)",
-            placeholder="Ex: 2022-2024 : Vendeur chez Zara. Conseil client, encaissement, gestion des stocks."
+            placeholder="Ex: 2022-2024 : Vendeur chez Zara. Conseil client, encaissement..."
         )
         etudes_cv = st.text_area(
             "Formations et diplômes (Diplôme, École, Année)",
@@ -298,7 +306,7 @@ with tab2:
         )
        
     with col_cv2:
-        st.info("💡 L'IA va transformer vos notes brutes en un CV ultra-professionnel, réécrire vos missions de manière valorisante et structurer le tout proprement.")
+        st.info("💡 L'IA va transformer vos notes brutes en un CV ultra-professionnel.")
        
         if st.button("🛠️ Générer mon CV optimisé", use_container_width=True, type="primary"):
             if not client:
@@ -324,19 +332,19 @@ with tab2:
                         - Études : {etudes_cv}
                         - Compétences : {competences_cv}
                        
-                        Structure attendue pour le résultat :
+                        Structure attendue :
                         1. En-tête centré avec Nom, Métier et Contacts.
                         2. Un court paragraphe d'accroche (profil professionnel) de 3 lignes maximum.
-                        3. Section "Expériences Professionnelles" propre avec puces stylisées.
-                        4. Section "Formations" bien alignée.
-                        5. Section "Compétences" classée par catégories logiques.
+                        3. Section "Expériences Professionnelles" avec puces.
+                        4. Section "Formations".
+                        5. Section "Compétences" classée par catégories.
                        
                         Fais en sorte que le résultat soit clair, percutant et prêt à être copié-collé.
                         """
                        
                         texte_genere = appeler_groq(prompt_cv)
                        
-                        st.success("Votre CV est prêt ! Copiez le texte ci-dessous :")
+                        st.success("Votre CV est prêt !")
                         st.text_area("Structure et textes optimisés du CV :", texte_genere, height=450)
                        
                         enregistrer_generation()
@@ -344,19 +352,19 @@ with tab2:
                         st.error(f"Une erreur est survenue lors de la création du CV : {e}")
 
 # ------------------------------------------------------------------------------
-# ONGLET 3 : OUTILS PREMIUM EXCLUSIFS
+# ONGLET 3 : OUTILS PREMIUM
 # ------------------------------------------------------------------------------
 with tab3:
     st.subheader("Boîte à outils Premium 👑")
    
     if not st.session_state.is_premium:
-        st.warning("🔒 Cet espace est réservé aux membres Premium. Payez une seule fois pour débloquer toutes ces fonctionnalités.")
+        st.warning("🔒 Cet espace est réservé aux membres Premium.")
        
         st.markdown("""
-        ### Découvrez ce qui vous attend dans l'espace Premium :
-        - 📞 **Le Relanceur Automatique :** Générez des e-mails de relance professionnels.
-        - 👔 **Simulateur d'Entretien :** Obtenez les 3 questions les plus piégeuses.
-        - 💬 **L'Approche Directe LinkedIn :** Convertissez votre profil en un message court.
+        ### Découvrez ce qui vous attend :
+        - 📞 **Le Relanceur Automatique**
+        - 👔 **Simulateur d'Entretien**
+        - 💬 **Message LinkedIn d'approche directe**
         """)
        
         st.markdown(f"""
@@ -373,25 +381,25 @@ with tab3:
         st.markdown("<span class='premium-badge'>👑 BIENVENUE DANS VOTRE ESPACE PREMIUM</span>", unsafe_allow_html=True)
        
         choix_outil = st.radio(
-            "Choisissez un outil Premium à utiliser :",
+            "Choisissez un outil Premium :",
             ["📞 Relance de candidature (Suivi)", "👔 Préparation à l'entretien", "💬 Message LinkedIn d'approche directe"]
         )
        
         st.markdown("<hr>", unsafe_allow_html=True)
        
         if choix_outil == "📞 Relance de candidature (Suivi)":
-            st.markdown("#### Générateur d'e-mail de relance professionnel")
+            st.markdown("#### Générateur d'e-mail de relance")
             col_r1, col_r2 = st.columns(2)
             with col_r1:
-                rel_ent = st.text_input("Nom de l'entreprise postulée", placeholder="Ex: Décathlon")
+                rel_ent = st.text_input("Nom de l'entreprise", placeholder="Ex: Décathlon")
                 rel_poste = st.text_input("Poste concerné", placeholder="Ex: Responsable Rayon")
-                rel_temps = st.selectbox("Depuis combien de temps avez-vous postulé ?", ["1 semaine", "2 semaines", "Plus de 2 semaines"])
+                rel_temps = st.selectbox("Depuis combien de temps ?", ["1 semaine", "2 semaines", "Plus de 2 semaines"])
                 rel_ton = st.selectbox("Style de relance", ["Poli & Classique", "Court & Enthousiaste"])
            
             with col_r2:
                 if st.button("🚀 Créer l'e-mail de relance", use_container_width=True, type="primary"):
                     if not client:
-                        st.error("Veuillez entrer votre clé API Groq dans la barre latérale.")
+                        st.error("Veuillez entrer votre clé API Groq.")
                     else:
                         with st.spinner("Génération de la relance..."):
                             prompt_rel = f"Rédige un e-mail de relance court, extrêmement courtois et professionnel pour une candidature au poste de {rel_poste} chez {rel_ent} envoyée il y a {rel_temps}. Le style doit être {rel_ton}."
@@ -400,26 +408,26 @@ with tab3:
                             st.text_area("Message de relance :", texte_genere, height=250)
 
         elif choix_outil == "👔 Préparation à l'entretien":
-            st.markdown("#### Anticipateur de questions d'entretien IA")
+            st.markdown("#### Anticipateur de questions d'entretien")
             col_p1, col_p2 = st.columns(2)
             with col_p1:
                 prep_poste = st.text_input("Poste pour l'entretien", placeholder="Ex: Vendeur Conseil")
-                prep_ent = st.text_input("Entreprise de l'entretien", placeholder="Ex: Zara")
-                prep_desc = st.text_area("Description rapide du job", placeholder="Ex: Accueil, conseil client, réassort.")
+                prep_ent = st.text_input("Entreprise", placeholder="Ex: Zara")
+                prep_desc = st.text_area("Description rapide du job", placeholder="Ex: Accueil, conseil client...")
            
             with col_p2:
                 if st.button("🎯 Préparer mon entretien", use_container_width=True, type="primary"):
                     if not client:
-                        st.error("Veuillez entrer votre clé API Groq dans la barre latérale.")
+                        st.error("Veuillez entrer votre clé API Groq.")
                     else:
-                        with st.spinner("Analyse du poste et simulation..."):
+                        with st.spinner("Analyse du poste..."):
                             prompt_prep = f"Tu es un recruteur professionnel pour {prep_ent}. Le candidat passe un entretien pour {prep_poste}. Compétences : {prep_desc}. Donne les 3 questions les plus piégeuses, ce que le recruteur cherche, et la meilleure réponse type."
                             texte_genere = appeler_groq(prompt_prep)
                             st.success("Fiches de révision prêtes !")
                             st.write(texte_genere)
 
         elif choix_outil == "💬 Message LinkedIn d'approche directe":
-            st.markdown("#### Générateur de message court pour LinkedIn")
+            st.markdown("#### Générateur de message LinkedIn")
             col_l1, col_l2 = st.columns(2)
             with col_l1:
                 link_recruteur = st.text_input("Nom du recruteur (optionnel)", placeholder="Ex: Sophie Martin")
@@ -430,13 +438,13 @@ with tab3:
             with col_l2:
                 if st.button("📲 Rédiger le message LinkedIn", use_container_width=True, type="primary"):
                     if not client:
-                        st.error("Veuillez entrer votre clé API Groq dans la barre latérale.")
+                        st.error("Veuillez entrer votre clé API Groq.")
                     else:
-                        with st.spinner("Synthèse du message direct..."):
+                        with st.spinner("Synthèse du message..."):
                             nom_rec_text = link_recruteur if link_recruteur else "le recruteur"
                             prompt_link = f"Rédige un message de prise de contact direct ultra-court pour LinkedIn (300-400 caractères) pour {nom_rec_text} pour le poste de {link_poste} chez {link_entreprise}. Atout : {link_accroche}."
                             texte_genere = appeler_groq(prompt_link)
                             st.success("Message LinkedIn rédigé !")
                             st.text_area("Votre message d'approche :", texte_genere, height=200)
 
-st.markdown("<hr style='margin-top:50px;'><p style='text-align:center; color:#94A3B8; font-size:12px;'>Générateur Pro CV & Lettres de Motivation © 2026. Tous droits réservés.</p>", unsafe_allow_html=True)
+st.markdown("<hr style='margin-top:50px;'><p style='text-align:center; color:#94A3B8; font-size:12px;'>Générateur Pro CV & Lettres de Motivation © 2026</p>", unsafe_allow_html=True)
