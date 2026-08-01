@@ -1,5 +1,6 @@
 import streamlit as st
-import google.generativeai as genai
+import os
+from openai import OpenAI
 
 # ==============================================================================
 # CONFIGURATION ET LIENS DE PAIEMENT
@@ -57,7 +58,6 @@ st.markdown("""
 # Initialisation des variables de session
 if "generations_count" not in st.session_state:
     st.session_state.generations_count = 0
-
 if "is_premium" not in st.session_state:
     st.session_state.is_premium = False
 
@@ -65,22 +65,36 @@ if "is_premium" not in st.session_state:
 # BARRE LATÉRALE - CONFIGURATION & ESPACE PREMIUM
 # ==============================================================================
 st.sidebar.image("https://img.icons8.com/fluent/96/000000/crown.png", width=60)
-st.sidebar.title("Configuration & IA")
+st.sidebar.title("Configuration & IA (Groq)")
 
-# Champ pour entrer la clé directement dans l'interface
-user_api_key = st.sidebar.text_input("🔑 Entrez votre Clé API Gemini :", type="password")
+# Récupération prioritaire de la clé via variable d'environnement
+api_key = os.environ.get("GROQ_API_KEY")
 
+# Champ pour entrer la clé manuellement si pas de variable d'environnement
+user_api_key = st.sidebar.text_input(
+    "🔑 Entrez votre Clé API Groq :",
+    type="password",
+    value=api_key if api_key else "",
+    help="Vous pouvez aussi définir la variable d'environnement GROQ_API_KEY"
+)
+
+client = None
 if user_api_key:
-    genai.configure(api_key=user_api_key)
-    st.sidebar.success("✅ IA connectée avec succès")
+    try:
+        client = OpenAI(
+            base_url="https://api.groq.com/openai/v1",
+            api_key=user_api_key
+        )
+        st.sidebar.success("✅ IA connectée avec succès (Groq)")
+    except Exception as e:
+        st.sidebar.error(f"Erreur d'initialisation : {e}")
 else:
-    st.sidebar.warning("⚠️ Veuillez entrer une clé API pour activer l'IA.")
+    st.sidebar.warning("⚠️ Veuillez entrer une clé API Groq (console.groq.com) ou définir GROQ_API_KEY.")
 
 st.sidebar.markdown("---")
 st.sidebar.title("Espace Premium 👑")
 
 code_saisi = st.sidebar.text_input("Tu as payé ? Entre ton code d'accès :", type="password")
-
 if code_saisi:
     if code_saisi.strip() == CODE_SECRET_PREMIUM:
         st.session_state.is_premium = True
@@ -147,6 +161,16 @@ def enregistrer_generation():
     if not st.session_state.is_premium:
         st.session_state.generations_count += 1
 
+def appeler_groq(prompt: str) -> str:
+    """Appelle le modèle llama-3.3-70b-versatile via Groq."""
+    chat_completion = client.chat.completions.create(
+        messages=[{"role": "user", "content": prompt}],
+        model="llama-3.3-70b-versatile",
+        temperature=0.7,
+        max_tokens=2048,
+    )
+    return chat_completion.choices[0].message.content
+
 # ==============================================================================
 # CORPS PRINCIPAL DE L'APPLICATION
 # ==============================================================================
@@ -154,8 +178,8 @@ st.markdown("<div class='main-title'>Générateur de Candidature Intelligent �
 st.markdown("<div class='subtitle'>L'intelligence artificielle au service de votre réussite professionnelle</div>", unsafe_allow_html=True)
 
 tab1, tab2, tab3 = st.tabs([
-    "📝 Lettre de Motivation", 
-    "📄 Créateur de CV Pro", 
+    "📝 Lettre de Motivation",
+    "📄 Créateur de CV Pro",
     "👑 Boite à Outils Premium"
 ])
 
@@ -164,24 +188,24 @@ tab1, tab2, tab3 = st.tabs([
 # ------------------------------------------------------------------------------
 with tab1:
     st.subheader("Créez une lettre de motivation percutante")
-    
+   
     col1, col2 = st.columns([1, 1])
-    
+   
     with col1:
         nom_complet = st.text_input("Votre Nom et Prénom", placeholder="Ex: Jean Dupont")
         poste_vise = st.text_input("Poste visé", placeholder="Ex: Conseiller de vente")
         entreprise_cible = st.text_input("Entreprise", placeholder="Ex: Nike")
         competences_cles = st.text_area(
-            "Vos compétences clés & points forts (séparés par des virgules)", 
+            "Vos compétences clés & points forts (séparés par des virgules)",
             placeholder="Ex: Sens du service client, dynamisme, esprit d'équipe, 2 ans d'expérience dans le prêt-à-porter..."
         )
-        
+       
         if st.session_state.is_premium:
             st.markdown("<span class='premium-badge'>👑 OPTION PREMIUM ACTIVE</span>", unsafe_allow_html=True)
             ton_lettre = st.selectbox(
                 "Style et ton de la lettre",
-                ["Classique / Formel (Recommandé pour grandes entreprises)", 
-                 "Dynamique / Start-up (Moderne et percutant)", 
+                ["Classique / Formel (Recommandé pour grandes entreprises)",
+                 "Dynamique / Start-up (Moderne et percutant)",
                  "Créatif / Audacieux (Pour vous démarquer)"]
             )
         else:
@@ -195,10 +219,10 @@ with tab1:
 
     with col2:
         st.info("💡 Plus vous donnez de détails sur vos forces, plus la lettre rédigée par l'IA sera personnalisée et convaincante !")
-        
+       
         if st.button("✨ Générer ma lettre de motivation", use_container_width=True, type="primary"):
-            if not user_api_key:
-                st.error("Veuillez entrer votre clé API Gemini dans la barre latérale gauche.")
+            if not client:
+                st.error("Veuillez entrer votre clé API Groq dans la barre latérale gauche.")
             elif not nom_complet or not poste_vise or not entreprise_cible:
                 st.warning("Veuillez remplir au moins votre nom, le poste visé et l'entreprise.")
             elif not peut_generer():
@@ -217,15 +241,15 @@ with tab1:
                         prompt_lettre = f"""
                         Tu es un rédacteur professionnel expert en recrutement.
                         Rédige une lettre de motivation convaincante, percutante et sans fautes d'orthographe.
-                        
+                       
                         Informations du candidat :
                         - Nom complet : {nom_complet}
                         - Poste visé : {poste_vise}
                         - Entreprise visée : {entreprise_cible}
                         - Compétences et forces : {competences_cles}
-                        
+                       
                         Style demandé : {style_instruction}
-                        
+                       
                         La structure de la lettre doit être la suivante :
                         1. En-tête (Informations de contact fictives à remplacer, date du jour)
                         2. Objet de la lettre clair
@@ -233,16 +257,15 @@ with tab1:
                         4. Pourquoi cette entreprise spécifique et le lien avec le candidat (Le 'Vous')
                         5. Ce que le candidat apporte à l'équipe (Le 'Nous')
                         6. Appel à l'action pour un entretien et formule de politesse soignée.
-                        
+                       
                         Rends le texte immédiatement exploitable et chaleureux.
                         """
-                        
-                        model = genai.GenerativeModel("gemini-2.0-flash")
-                        response = model.generate_content(prompt_lettre)
-                        
+                       
+                        texte_genere = appeler_groq(prompt_lettre)
+                       
                         st.success("Rédaction terminée avec succès ! 🎉")
-                        st.text_area("Copiez votre lettre ci-dessous :", response.text, height=450)
-                        
+                        st.text_area("Copiez votre lettre ci-dessous :", texte_genere, height=450)
+                       
                         enregistrer_generation()
                     except Exception as e:
                         st.error(f"Une erreur est survenue : {e}")
@@ -252,34 +275,34 @@ with tab1:
 # ------------------------------------------------------------------------------
 with tab2:
     st.subheader("Générateur de structure de CV Professionnel")
-    
+   
     col_cv1, col_cv2 = st.columns([1, 1])
-    
+   
     with col_cv1:
         nom_cv = st.text_input("Nom & Prénom (CV)", placeholder="Ex: Jean Dupont")
         email_cv = st.text_input("Adresse Email", placeholder="Ex: jean.dupont@email.com")
         tel_cv = st.text_input("Téléphone", placeholder="Ex: 06 12 34 56 78")
         metier_cv = st.text_input("Titre du CV (Votre métier)", placeholder="Ex: Commercial Terrain / Vendeur")
-        
+       
         experiences_cv = st.text_area(
-            "Vos expériences professionnelles (Poste, Entreprise, Dates, Missions)", 
+            "Vos expériences professionnelles (Poste, Entreprise, Dates, Missions)",
             placeholder="Ex: 2022-2024 : Vendeur chez Zara. Conseil client, encaissement, gestion des stocks."
         )
         etudes_cv = st.text_area(
-            "Formations et diplômes (Diplôme, École, Année)", 
+            "Formations et diplômes (Diplôme, École, Année)",
             placeholder="Ex: 2021 : Bac Pro Métiers du Commerce et de la Vente"
         )
         competences_cv = st.text_input(
-            "Hard & Soft Skills (séparés par des virgules)", 
+            "Hard & Soft Skills (séparés par des virgules)",
             placeholder="Ex: Relation client, Négociation, Excel, Ponctualité"
         )
-        
+       
     with col_cv2:
         st.info("💡 L'IA va transformer vos notes brutes en un CV ultra-professionnel, réécrire vos missions de manière valorisante et structurer le tout proprement.")
-        
+       
         if st.button("🛠️ Générer mon CV optimisé", use_container_width=True, type="primary"):
-            if not user_api_key:
-                st.error("Veuillez entrer votre clé API Gemini dans la barre latérale gauche.")
+            if not client:
+                st.error("Veuillez entrer votre clé API Groq dans la barre latérale gauche.")
             elif not nom_cv or not metier_cv:
                 st.warning("Veuillez indiquer au moins votre nom et votre titre de métier.")
             elif not peut_generer():
@@ -291,7 +314,7 @@ with tab2:
                         Tu es un coach en carrière et un concepteur de CV professionnel.
                         À partir des données brutes suivantes, rédige un CV structuré en Markdown.
                         Réécris les expériences pour les rendre extrêmement valorisantes.
-                        
+                       
                         Données reçues :
                         - Nom : {nom_cv}
                         - Titre visé : {metier_cv}
@@ -300,23 +323,22 @@ with tab2:
                         - Expériences : {experiences_cv}
                         - Études : {etudes_cv}
                         - Compétences : {competences_cv}
-                        
+                       
                         Structure attendue pour le résultat :
                         1. En-tête centré avec Nom, Métier et Contacts.
                         2. Un court paragraphe d'accroche (profil professionnel) de 3 lignes maximum.
                         3. Section "Expériences Professionnelles" propre avec puces stylisées.
                         4. Section "Formations" bien alignée.
                         5. Section "Compétences" classée par catégories logiques.
-                        
+                       
                         Fais en sorte que le résultat soit clair, percutant et prêt à être copié-collé.
                         """
-                        
-                        model = genai.GenerativeModel("gemini-2.0-flash")
-                        response = model.generate_content(prompt_cv)
-                        
+                       
+                        texte_genere = appeler_groq(prompt_cv)
+                       
                         st.success("Votre CV est prêt ! Copiez le texte ci-dessous :")
-                        st.text_area("Structure et textes optimisés du CV :", response.text, height=450)
-                        
+                        st.text_area("Structure et textes optimisés du CV :", texte_genere, height=450)
+                       
                         enregistrer_generation()
                     except Exception as e:
                         st.error(f"Une erreur est survenue lors de la création du CV : {e}")
@@ -326,17 +348,17 @@ with tab2:
 # ------------------------------------------------------------------------------
 with tab3:
     st.subheader("Boîte à outils Premium 👑")
-    
+   
     if not st.session_state.is_premium:
         st.warning("🔒 Cet espace est réservé aux membres Premium. Payez une seule fois pour débloquer toutes ces fonctionnalités.")
-        
+       
         st.markdown("""
         ### Découvrez ce qui vous attend dans l'espace Premium :
         - 📞 **Le Relanceur Automatique :** Générez des e-mails de relance professionnels.
         - 👔 **Simulateur d'Entretien :** Obtenez les 3 questions les plus piégeuses.
         - 💬 **L'Approche Directe LinkedIn :** Convertissez votre profil en un message court.
         """)
-        
+       
         st.markdown(f"""
         <div style="text-align: center; margin-top:20px;">
             <a href="{PAYPAL_LINK}" target="_blank">
@@ -346,17 +368,17 @@ with tab3:
             </a>
         </div>
         """, unsafe_allow_html=True)
-        
+       
     else:
         st.markdown("<span class='premium-badge'>👑 BIENVENUE DANS VOTRE ESPACE PREMIUM</span>", unsafe_allow_html=True)
-        
+       
         choix_outil = st.radio(
             "Choisissez un outil Premium à utiliser :",
             ["📞 Relance de candidature (Suivi)", "👔 Préparation à l'entretien", "💬 Message LinkedIn d'approche directe"]
         )
-        
+       
         st.markdown("<hr>", unsafe_allow_html=True)
-        
+       
         if choix_outil == "📞 Relance de candidature (Suivi)":
             st.markdown("#### Générateur d'e-mail de relance professionnel")
             col_r1, col_r2 = st.columns(2)
@@ -365,18 +387,17 @@ with tab3:
                 rel_poste = st.text_input("Poste concerné", placeholder="Ex: Responsable Rayon")
                 rel_temps = st.selectbox("Depuis combien de temps avez-vous postulé ?", ["1 semaine", "2 semaines", "Plus de 2 semaines"])
                 rel_ton = st.selectbox("Style de relance", ["Poli & Classique", "Court & Enthousiaste"])
-            
+           
             with col_r2:
                 if st.button("🚀 Créer l'e-mail de relance", use_container_width=True, type="primary"):
-                    if not user_api_key:
-                        st.error("Veuillez entrer votre clé API Gemini dans la barre latérale.")
+                    if not client:
+                        st.error("Veuillez entrer votre clé API Groq dans la barre latérale.")
                     else:
                         with st.spinner("Génération de la relance..."):
                             prompt_rel = f"Rédige un e-mail de relance court, extrêmement courtois et professionnel pour une candidature au poste de {rel_poste} chez {rel_ent} envoyée il y a {rel_temps}. Le style doit être {rel_ton}."
-                            model = genai.GenerativeModel("gemini-2.0-flash")
-                            response = model.generate_content(prompt_rel)
+                            texte_genere = appeler_groq(prompt_rel)
                             st.success("Votre relance est prête !")
-                            st.text_area("Message de relance :", response.text, height=250)
+                            st.text_area("Message de relance :", texte_genere, height=250)
 
         elif choix_outil == "👔 Préparation à l'entretien":
             st.markdown("#### Anticipateur de questions d'entretien IA")
@@ -385,18 +406,17 @@ with tab3:
                 prep_poste = st.text_input("Poste pour l'entretien", placeholder="Ex: Vendeur Conseil")
                 prep_ent = st.text_input("Entreprise de l'entretien", placeholder="Ex: Zara")
                 prep_desc = st.text_area("Description rapide du job", placeholder="Ex: Accueil, conseil client, réassort.")
-            
+           
             with col_p2:
                 if st.button("🎯 Préparer mon entretien", use_container_width=True, type="primary"):
-                    if not user_api_key:
-                        st.error("Veuillez entrer votre clé API Gemini dans la barre latérale.")
+                    if not client:
+                        st.error("Veuillez entrer votre clé API Groq dans la barre latérale.")
                     else:
                         with st.spinner("Analyse du poste et simulation..."):
                             prompt_prep = f"Tu es un recruteur professionnel pour {prep_ent}. Le candidat passe un entretien pour {prep_poste}. Compétences : {prep_desc}. Donne les 3 questions les plus piégeuses, ce que le recruteur cherche, et la meilleure réponse type."
-                            model = genai.GenerativeModel("gemini-2.0-flash")
-                            response = model.generate_content(prompt_prep)
+                            texte_genere = appeler_groq(prompt_prep)
                             st.success("Fiches de révision prêtes !")
-                            st.write(response.text)
+                            st.write(texte_genere)
 
         elif choix_outil == "💬 Message LinkedIn d'approche directe":
             st.markdown("#### Générateur de message court pour LinkedIn")
@@ -406,18 +426,17 @@ with tab3:
                 link_poste = st.text_input("Poste ciblé", placeholder="Ex: Développeur Web Junior")
                 link_entreprise = st.text_input("Entreprise ciblée", placeholder="Ex: Leroy Merlin")
                 link_accroche = st.text_input("Votre atout principal", placeholder="Ex: Autodidacte passionné.")
-            
+           
             with col_l2:
                 if st.button("📲 Rédiger le message LinkedIn", use_container_width=True, type="primary"):
-                    if not user_api_key:
-                        st.error("Veuillez entrer votre clé API Gemini dans la barre latérale.")
+                    if not client:
+                        st.error("Veuillez entrer votre clé API Groq dans la barre latérale.")
                     else:
                         with st.spinner("Synthèse du message direct..."):
                             nom_rec_text = link_recruteur if link_recruteur else "le recruteur"
                             prompt_link = f"Rédige un message de prise de contact direct ultra-court pour LinkedIn (300-400 caractères) pour {nom_rec_text} pour le poste de {link_poste} chez {link_entreprise}. Atout : {link_accroche}."
-                            model = genai.GenerativeModel("gemini-2.0-flash")
-                            response = model.generate_content(prompt_link)
+                            texte_genere = appeler_groq(prompt_link)
                             st.success("Message LinkedIn rédigé !")
-                            st.text_area("Votre message d'approche :", response.text, height=200)
+                            st.text_area("Votre message d'approche :", texte_genere, height=200)
 
 st.markdown("<hr style='margin-top:50px;'><p style='text-align:center; color:#94A3B8; font-size:12px;'>Générateur Pro CV & Lettres de Motivation © 2026. Tous droits réservés.</p>", unsafe_allow_html=True)
